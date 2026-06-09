@@ -36,7 +36,7 @@ gains-tracker/
         badminton.ts                # estimateBadmintonKcal (§Task 8)
       auth.ts                       # cookie sign/verify helpers (§Task 9)
       repos.ts                      # thin DB query/insert functions (§Task 10)
-    middleware.ts                   # password-gate all routes (§Task 9)
+    proxy.ts                        # password-gate all routes — Next 16 renamed middleware.ts -> proxy.ts (§Task 9)
     app/
       login/page.tsx                # password form (§Task 9)
       api/auth/route.ts             # POST password -> set cookie (§Task 9)
@@ -875,13 +875,13 @@ export async function POST(req: Request) {
 }
 ```
 
-- [ ] **Step 3: Write `src/middleware.ts`**
+- [ ] **Step 3: Write `src/proxy.ts`** (Next.js 16 renamed the `middleware` file convention to `proxy`; the function must be named `proxy`)
 
 ```ts
 import { NextRequest, NextResponse } from "next/server";
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/auth";
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   const ok = await verifySessionToken(token, process.env.AUTH_SECRET!);
   if (!ok) {
