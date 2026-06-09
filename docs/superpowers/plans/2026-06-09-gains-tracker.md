@@ -141,15 +141,19 @@ In the `"scripts"` block add:
 
 Then install the seed runner: `npm install -D tsx`
 
-- [ ] **Step 3: Create `vitest.config.ts`**
+- [ ] **Step 3: Create `vitest.config.ts`** (the `resolve.alias` is required so tests can import `@/...`)
 
 ```ts
 import { defineConfig } from "vitest/config";
+import { fileURLToPath } from "node:url";
 
 export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts"],
     environment: "node",
+  },
+  resolve: {
+    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
 });
 ```
@@ -824,7 +828,10 @@ async function hmac(secret: string): Promise<string> {
     key,
     new TextEncoder().encode(PAYLOAD),
   );
-  return Buffer.from(new Uint8Array(sig)).toString("hex");
+  // edge-runtime safe hex encoding (no Node Buffer in middleware)
+  return Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 export async function makeSessionToken(secret: string): Promise<string> {
@@ -859,7 +866,7 @@ export async function POST(req: Request) {
   const res = NextResponse.json({ ok: true });
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === "production", // localhost dev is http
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 365, // 1 year
