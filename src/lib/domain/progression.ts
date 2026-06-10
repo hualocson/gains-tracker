@@ -17,10 +17,12 @@ export type Nudge = {
 export function computeProgressionNudge(
   sets: { reps: number }[],
   exercise: ExerciseTarget,
-  next: NextExercise,
+  next: NextExercise
 ): Nudge {
-  if (!next) return { shouldNudge: false };
-  const qualifying = sets.filter((s) => s.reps >= exercise.repTargetReps).length;
+  if (!next) {return { shouldNudge: false };}
+  const qualifying = sets.filter(
+    (s) => s.reps >= exercise.repTargetReps
+  ).length;
   if (qualifying >= exercise.repTargetSets) {
     return { shouldNudge: true, fromName: exercise.name, toName: next.name };
   }

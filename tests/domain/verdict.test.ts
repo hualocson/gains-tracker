@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { computeGainingVerdict } from "@/lib/domain/verdict";
+import { describe, expect, it } from "vitest";
 
 const d = (s: string) => new Date(s + "T00:00:00Z");
 
@@ -7,7 +7,7 @@ describe("computeGainingVerdict", () => {
   it("returns insufficient_data with too few logs", () => {
     const r = computeGainingVerdict(
       [{ date: d("2026-06-01"), weightKg: 70 }],
-      d("2026-06-09"),
+      d("2026-06-09")
     );
     expect(r.state).toBe("insufficient_data");
   });

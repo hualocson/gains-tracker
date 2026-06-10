@@ -8,7 +8,7 @@ const KCAL_PER_MIN: Record<Intensity, number> = {
 
 export function estimateBadmintonKcal(
   durationMin: number,
-  intensity: Intensity,
+  intensity: Intensity
 ): number {
   return durationMin * KCAL_PER_MIN[intensity];
 }

@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+
 import { useRouter } from "next/navigation";
 
 export default function Login() {
@@ -14,8 +15,8 @@ export default function Login() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password }),
     });
-    if (res.ok) router.push("/");
-    else setError(true);
+    if (res.ok) {router.push("/");}
+    else {setError(true);}
   }
 
   return (
@@ -30,7 +31,9 @@ export default function Login() {
           className="w-full rounded border p-3"
         />
         {error && <p className="text-sm text-red-600">Wrong password</p>}
-        <button className="w-full rounded bg-black p-3 text-white">Enter</button>
+        <button className="w-full rounded bg-black p-3 text-white">
+          Enter
+        </button>
       </form>
     </main>
   );

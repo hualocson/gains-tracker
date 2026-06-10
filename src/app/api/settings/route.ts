@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import { getSettings, upsertSettings } from "@/lib/repos";
 
 export async function GET() {

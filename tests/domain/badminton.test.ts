@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { estimateBadmintonKcal } from "@/lib/domain/badminton";
+import { describe, expect, it } from "vitest";
 
 describe("estimateBadmintonKcal", () => {
   it("low intensity ~5 kcal/min", () => {

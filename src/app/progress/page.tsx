@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { getWeightLogs, getSettings, getExerciseBests } from "@/lib/repos";
+
+import { getExerciseBests, getSettings, getWeightLogs } from "@/lib/repos";
+
 import { WeightChart } from "@/components/WeightChart";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +29,9 @@ export default async function ProgressPage() {
         )}
       </section>
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-gray-600">Exercise bests (max reps in a set)</h2>
+        <h2 className="mb-2 text-sm font-semibold text-gray-600">
+          Exercise bests (max reps in a set)
+        </h2>
         {bests.length === 0 ? (
           <p className="text-gray-500">No workouts logged yet.</p>
         ) : (
@@ -41,7 +45,12 @@ export default async function ProgressPage() {
           </ul>
         )}
       </section>
-      <Link href="/" className="block text-center text-sm text-gray-500 underline">← back</Link>
+      <Link
+        href="/"
+        className="block text-center text-sm text-gray-500 underline"
+      >
+        ← back
+      </Link>
     </main>
   );
 }

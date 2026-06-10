@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
+
 import { useRouter } from "next/navigation";
+
 import { todayISO } from "@/lib/date";
 
 export default function BadmintonPage() {
@@ -21,7 +23,7 @@ export default function BadmintonPage() {
       }),
     });
     const data = await res.json();
-    if (res.ok) setKcal(data.kcal);
+    if (res.ok) {setKcal(data.kcal);}
   }
 
   return (
@@ -31,24 +33,39 @@ export default function BadmintonPage() {
         <div className="rounded-2xl bg-amber-100 p-6 text-amber-900">
           <p className="font-bold">~{kcal} kcal burned 🏸</p>
           <p className="text-sm">Eat extra today to stay in surplus.</p>
-          <button onClick={() => router.push("/")} className="mt-4 rounded bg-black px-4 py-2 text-white">Done</button>
+          <button
+            onClick={() => router.push("/")}
+            className="mt-4 rounded bg-black px-4 py-2 text-white"
+          >
+            Done
+          </button>
         </div>
       ) : (
         <form onSubmit={submit} className="space-y-4">
           <input
-            type="number" inputMode="numeric" required
-            value={duration} onChange={(e) => setDuration(e.target.value)}
-            placeholder="Duration (minutes)" className="w-full rounded border p-3 text-lg"
+            type="number"
+            inputMode="numeric"
+            required
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+            placeholder="Duration (minutes)"
+            className="w-full rounded border p-3 text-lg"
           />
           <div className="flex gap-2">
             {(["low", "med", "high"] as const).map((i) => (
               <button
-                type="button" key={i} onClick={() => setIntensity(i)}
+                type="button"
+                key={i}
+                onClick={() => setIntensity(i)}
                 className={`flex-1 rounded-xl p-3 capitalize ${intensity === i ? "bg-black text-white" : "bg-gray-100"}`}
-              >{i}</button>
+              >
+                {i}
+              </button>
             ))}
           </div>
-          <button className="w-full rounded-xl bg-black p-4 font-semibold text-white">Save</button>
+          <button className="w-full rounded-xl bg-black p-4 font-semibold text-white">
+            Save
+          </button>
         </form>
       )}
     </main>

@@ -11,7 +11,7 @@ function weekStart(date: Date): number {
 export function computeWeeklyStreak(
   workoutDates: Date[],
   goal: number,
-  today: Date,
+  today: Date
 ): number {
   const counts = new Map<number, number>();
   for (const dt of workoutDates) {
@@ -34,9 +34,9 @@ export function computeWeeklyStreak(
     }
     week = week - 7 * DAY_MS;
     isCurrent = false;
-    if (counts.size === 0) break;
+    if (counts.size === 0) {break;}
     const earliest = Math.min(...counts.keys());
-    if (week < earliest) break;
+    if (week < earliest) {break;}
   }
 
   return streak;
