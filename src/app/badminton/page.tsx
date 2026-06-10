@@ -14,10 +14,13 @@ import { Label } from "@/components/ui/label";
 
 import { PageHeader } from "@/components/PageHeader";
 
+type Result = { kcal: number; estimated: boolean };
+
 export default function BadmintonPage() {
   const [duration, setDuration] = useState("");
   const [intensity, setIntensity] = useState<"low" | "med" | "high">("med");
-  const [kcal, setKcal] = useState<number | null>(null);
+  const [calories, setCalories] = useState("");
+  const [result, setResult] = useState<Result | null>(null);
   const router = useRouter();
 
   async function submit(e: React.FormEvent) {
@@ -29,18 +32,19 @@ export default function BadmintonPage() {
         date: todayISO(),
         durationMin: parseInt(duration, 10),
         intensity,
+        kcal: calories.trim() ? parseFloat(calories) : null,
       }),
     });
     const data = await res.json();
     if (res.ok) {
-      setKcal(data.kcal);
+      setResult({ kcal: data.kcal, estimated: data.estimated });
     }
   }
 
   return (
     <main className="mx-auto max-w-md space-y-6 px-5 pt-5 pb-10">
       <PageHeader title="Badminton" eyebrow="Log today" />
-      {kcal !== null ? (
+      {result !== null ? (
         <Card>
           <CardContent className="space-y-5">
             <div className="flex items-center gap-4">
@@ -49,10 +53,11 @@ export default function BadmintonPage() {
               </span>
               <div>
                 <div className="text-3xl leading-none font-bold tabular-nums">
-                  ~{kcal}
+                  {result.estimated ? "~" : ""}
+                  {result.kcal}
                 </div>
                 <div className="text-muted-foreground mt-1.5 text-sm">
-                  kcal burned
+                  kcal burned{result.estimated ? " (estimated)" : ""}
                 </div>
               </div>
             </div>
@@ -99,6 +104,17 @@ export default function BadmintonPage() {
                 </button>
               ))}
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="calories">Calories burned (optional)</Label>
+            <Input
+              id="calories"
+              type="number"
+              inputMode="numeric"
+              value={calories}
+              onChange={(e) => setCalories(e.target.value)}
+              placeholder="Estimated from intensity if blank"
+            />
           </div>
           <Button type="submit" className="w-full">
             Save session

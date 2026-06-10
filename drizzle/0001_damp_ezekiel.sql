@@ -1,0 +1,1 @@
+ALTER TABLE "badminton_sessions" ADD COLUMN "kcal" integer;

@@ -57,4 +57,7 @@ export const badmintonSessions = pgTable("badminton_sessions", {
   date: date("date").notNull(),
   durationMin: integer("duration_min").notNull(),
   intensity: text("intensity").notNull(),
+  // Effective calories burned for the session — the manual entry when given,
+  // otherwise the duration × intensity estimate. Nullable for pre-existing rows.
+  kcal: integer("kcal"),
 });

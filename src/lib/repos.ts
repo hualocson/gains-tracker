@@ -119,9 +119,26 @@ export async function getWeightLogs() {
 export async function logBadminton(
   date: string,
   durationMin: number,
-  intensity: string
+  intensity: string,
+  kcal: number
 ) {
-  await db.insert(badmintonSessions).values({ date, durationMin, intensity });
+  await db
+    .insert(badmintonSessions)
+    .values({ date, durationMin, intensity, kcal });
+}
+
+export async function getBadmintonSessions() {
+  const rows = await db
+    .select()
+    .from(badmintonSessions)
+    .orderBy(desc(badmintonSessions.date), desc(badmintonSessions.id));
+  return rows.map((r) => ({
+    id: r.id,
+    date: new Date(r.date + "T00:00:00Z"),
+    durationMin: r.durationMin,
+    intensity: r.intensity as "low" | "med" | "high",
+    kcal: r.kcal,
+  }));
 }
 
 export async function getExerciseBests() {
