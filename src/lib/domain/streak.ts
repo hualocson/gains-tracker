@@ -34,9 +34,13 @@ export function computeWeeklyStreak(
     }
     week = week - 7 * DAY_MS;
     isCurrent = false;
-    if (counts.size === 0) {break;}
+    if (counts.size === 0) {
+      break;
+    }
     const earliest = Math.min(...counts.keys());
-    if (week < earliest) {break;}
+    if (week < earliest) {
+      break;
+    }
   }
 
   return streak;

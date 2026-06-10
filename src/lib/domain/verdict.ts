@@ -23,8 +23,9 @@ export function computeGainingVerdict(logs: WeightLog[], today: Date): Verdict {
     .filter((l) => l.date.getTime() >= cutoff)
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-  if (recent.length < MIN_LOGS)
-    {return { state: "insufficient_data", kgPerWeek: null };}
+  if (recent.length < MIN_LOGS) {
+    return { state: "insufficient_data", kgPerWeek: null };
+  }
 
   const x = recent.map((l) => l.date.getTime() / DAY_MS);
   const y = recent.map((l) => l.weightKg);
@@ -41,9 +42,13 @@ export function computeGainingVerdict(logs: WeightLog[], today: Date): Verdict {
   const kgPerWeek = slopePerDay * 7;
 
   let state: VerdictState;
-  if (kgPerWeek < LOWER) {state = "eat_more";}
-  else if (kgPerWeek > UPPER) {state = "too_fast";}
-  else {state = "on_track";}
+  if (kgPerWeek < LOWER) {
+    state = "eat_more";
+  } else if (kgPerWeek > UPPER) {
+    state = "too_fast";
+  } else {
+    state = "on_track";
+  }
 
   return { state, kgPerWeek };
 }

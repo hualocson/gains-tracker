@@ -19,7 +19,9 @@ export function computeProgressionNudge(
   exercise: ExerciseTarget,
   next: NextExercise
 ): Nudge {
-  if (!next) {return { shouldNudge: false };}
+  if (!next) {
+    return { shouldNudge: false };
+  }
   const qualifying = sets.filter(
     (s) => s.reps >= exercise.repTargetReps
   ).length;

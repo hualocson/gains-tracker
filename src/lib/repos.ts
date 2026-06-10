@@ -65,7 +65,9 @@ export async function getLastSetsForExercise(exerciseId: number) {
     .innerJoin(workouts, eq(workoutSets.workoutId, workouts.id))
     .where(eq(workoutSets.exerciseId, exerciseId))
     .orderBy(desc(workouts.date), desc(workoutSets.setIndex));
-  if (rows.length === 0) {return [];}
+  if (rows.length === 0) {
+    return [];
+  }
   const latestWorkoutId = rows[0].workoutId;
   return rows.filter((r) => r.workoutId === latestWorkoutId);
 }
@@ -128,8 +130,9 @@ export async function getExerciseBests() {
     .from(workoutSets)
     .innerJoin(exercises, eq(workoutSets.exerciseId, exercises.id));
   const best = new Map<string, number>();
-  for (const r of rows)
-    {best.set(r.name, Math.max(best.get(r.name) ?? 0, r.reps));}
+  for (const r of rows) {
+    best.set(r.name, Math.max(best.get(r.name) ?? 0, r.reps));
+  }
   return [...best.entries()]
     .map(([name, bestReps]) => ({ name, bestReps }))
     .sort((a, b) => b.bestReps - a.bestReps);

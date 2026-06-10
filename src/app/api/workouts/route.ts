@@ -48,7 +48,9 @@ export async function POST(req: Request) {
   const exerciseIds = [...new Set(sets.map((s) => s.exerciseId))];
   for (const exId of exerciseIds) {
     const ex = byId.get(exId);
-    if (!ex) {continue;}
+    if (!ex) {
+      continue;
+    }
     const exSets = sets
       .filter((s) => s.exerciseId === exId)
       .map((s) => ({ reps: s.reps }));
@@ -58,7 +60,9 @@ export async function POST(req: Request) {
       ex,
       next ? { id: next.id, name: next.name } : null
     );
-    if (nudge.shouldNudge) {nudges.push(nudge);}
+    if (nudge.shouldNudge) {
+      nudges.push(nudge);
+    }
   }
 
   return NextResponse.json({ ok: true, nudges });

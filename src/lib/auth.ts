@@ -27,7 +27,9 @@ export async function verifySessionToken(
   token: string | undefined,
   secret: string
 ): Promise<boolean> {
-  if (!token) {return false;}
+  if (!token) {
+    return false;
+  }
   const expected = await hmac(secret);
   return token.length === expected.length && token === expected;
 }
