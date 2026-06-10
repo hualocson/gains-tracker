@@ -901,7 +901,7 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   // protect everything except login page, auth API, and static assets
-  matcher: ["/((?!login|api/auth|_next/static|_next/image|favicon.ico|manifest.webmanifest|icons).*)"],
+  matcher: ["/((?!login|api/auth|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|icons).*)"],
 };
 ```
 
@@ -1746,29 +1746,12 @@ git commit -m "feat: progress screen with weight chart"
 ## Task 15: PWA (manifest + service worker) + settings bootstrap
 
 **Files:**
-- Modify: `next.config.ts`, `src/app/layout.tsx`
-- Create: `public/manifest.webmanifest`, `public/icons/` (192 + 512 png), `src/app/settings/page.tsx`
+- Modify: `src/app/layout.tsx`
+- Create: `public/manifest.webmanifest`, `public/sw.js`, `public/icons/` (192 + 512 png), `src/components/SwRegister.tsx`, `src/app/settings/page.tsx`
 
-- [ ] **Step 1: Install `next-pwa`**
+> **Note:** the original plan used `next-pwa`, which is effectively unmaintained and incompatible with Next.js 16 / Turbopack. We use a hand-rolled manifest + minimal service worker instead — fewer moving parts, no build-tool coupling.
 
-```bash
-npm install next-pwa
-```
-
-- [ ] **Step 2: Wrap `next.config.ts`**
-
-```ts
-import withPWAInit from "next-pwa";
-
-const withPWA = withPWAInit({
-  dest: "public",
-  disable: process.env.NODE_ENV === "development",
-});
-
-export default withPWA({});
-```
-
-- [ ] **Step 3: Create `public/manifest.webmanifest`**
+- [ ] **Step 1: Create `public/manifest.webmanifest`**
 
 ```json
 {
@@ -1779,24 +1762,70 @@ export default withPWA({});
   "background_color": "#ffffff",
   "theme_color": "#000000",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
 ```
 
-- [ ] **Step 4: Add icons** — place any 192×192 and 512×512 PNG at `public/icons/icon-192.png` and `public/icons/icon-512.png` (a plain colored square with "G" is fine for v1).
+- [ ] **Step 2: Generate icons** with `sharp` (rasterizes an SVG — a black rounded square with a white "G"):
 
-- [ ] **Step 5: Reference manifest in `src/app/layout.tsx`** — add to the exported `metadata`:
+```bash
+npm install -D sharp
+node --input-type=module -e '
+import sharp from "sharp";
+import { mkdirSync } from "node:fs";
+mkdirSync("public/icons", { recursive: true });
+const svg = (s) => Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}"><rect width="100%" height="100%" rx="${s*0.18}" fill="#000"/><text x="50%" y="52%" dy="0.35em" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="${s*0.6}" font-weight="bold" fill="#fff">G</text></svg>`);
+await sharp(svg(192)).png().toFile("public/icons/icon-192.png");
+await sharp(svg(512)).png().toFile("public/icons/icon-512.png");
+console.log("icons written");
+'
+```
+
+- [ ] **Step 3: Create `public/sw.js`** (minimal service worker — its presence + a fetch handler is what makes the app installable):
+
+```js
+// Minimal service worker for installability. No offline caching in v1.
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
+self.addEventListener("fetch", (e) => {
+  e.respondWith(fetch(e.request));
+});
+```
+
+- [ ] **Step 4: Create `src/components/SwRegister.tsx`** (registers the SW on the client):
+
+```tsx
+"use client";
+import { useEffect } from "react";
+
+export function SwRegister() {
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
+  return null;
+}
+```
+
+- [ ] **Step 5: Wire `src/app/layout.tsx`** — preserve the generated html/body/font setup. (a) Replace the exported `metadata`; (b) add a `viewport` export (Next 16 moved `themeColor` out of `metadata`); (c) import and render `<SwRegister />` inside `<body>`:
 
 ```ts
+import { SwRegister } from "@/components/SwRegister";
+
 export const metadata = {
   title: "Gains Tracker",
   manifest: "/manifest.webmanifest",
-  themeColor: "#000000",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "Gains" },
 };
+
+export const viewport = {
+  themeColor: "#000000",
+};
 ```
+(render `<SwRegister />` as the first child inside `<body>`, keeping the existing `{children}`.)
 
 - [ ] **Step 6: Create `src/app/settings/page.tsx`** (so target/current weight + weekly goal can be set — required before the verdict is meaningful)
 
