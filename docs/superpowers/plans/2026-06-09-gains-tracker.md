@@ -158,9 +158,12 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 4: Create `drizzle.config.ts`**
+- [ ] **Step 4: Create `drizzle.config.ts`** (loads `.env.local` explicitly — drizzle-kit does NOT read it automatically)
 
 ```ts
+import { config } from "dotenv";
+config({ path: ".env.local" });
+
 import { defineConfig } from "drizzle-kit";
 
 export default defineConfig({
@@ -170,6 +173,8 @@ export default defineConfig({
   dbCredentials: { url: process.env.DATABASE_URL! },
 });
 ```
+
+(Requires `dotenv`: `npm install dotenv`. Installed here rather than in Task 4 so migrations can read the env.)
 
 - [ ] **Step 5: Create `.env.local`** (fill in real values — Neon connection string + chosen password)
 
@@ -308,9 +313,13 @@ git commit -m "feat: add drizzle schema and neon client"
 - [ ] **Step 1: Write `src/db/seed.ts`** with the starting ladders
 
 ```ts
-import "dotenv/config";
-import { db } from "./client";
-import { exercises } from "./schema";
+import { config } from "dotenv";
+config({ path: ".env.local" });
+
+// Dynamic import AFTER env is loaded — ESM hoists static imports above the
+// config() call, and ./client calls neon(DATABASE_URL) at module-eval time.
+const { db } = await import("./client");
+const { exercises } = await import("./schema");
 
 // ladder_group -> ordered list of variation names (level = index + 1)
 const LADDERS: { group: string; category: string; names: string[] }[] = [
@@ -322,34 +331,32 @@ const LADDERS: { group: string; category: string; names: string[] }[] = [
   { group: "core", category: "core", names: ["Plank", "Leg Raises", "Hanging Knee Raise", "Hanging Leg Raise"] },
 ];
 
-async function main() {
-  const rows = LADDERS.flatMap((l) =>
-    l.names.map((name, i) => ({
-      name,
-      category: l.category,
-      ladderGroup: l.group,
-      level: i + 1,
-      repTargetSets: 3,
-      repTargetReps: 12,
-    })),
-  );
-  await db.insert(exercises).values(rows);
-  console.log(`Seeded ${rows.length} exercises`);
-}
+const rows = LADDERS.flatMap((l) =>
+  l.names.map((name, i) => ({
+    name,
+    category: l.category,
+    ladderGroup: l.group,
+    level: i + 1,
+    repTargetSets: 3,
+    repTargetReps: 12,
+  })),
+);
 
-main().then(() => process.exit(0));
+// idempotent: clear then insert, so re-running doesn't create duplicates
+await db.delete(exercises);
+await db.insert(exercises).values(rows);
+console.log(`Seeded ${rows.length} exercises`);
+process.exit(0);
 ```
 
-- [ ] **Step 2: Install dotenv (for the seed script env load)**
-
-```bash
-npm install dotenv
-```
+- [ ] **Step 2: dotenv** — already installed in Task 3. No action.
 
 - [ ] **Step 3: Run the seed**
 
 Run: `npm run db:seed`
-Expected: prints "Seeded 24 exercises" (5+3+3+4+5+4 = 24). Re-running duplicates rows — only run once.
+Expected: prints "Seeded 24 exercises" (5+3+3+4+5+4 = 24). The seed clears the table first, so it is safe to re-run.
+
+> ⚠️ Once Tasks 11–13 let you log real workouts, `workout_sets` rows reference `exercises.id`. Re-running the seed `DELETE`s exercises — do NOT re-seed after you have logged workouts, or you'll orphan/break those FK references. Seeding is a one-time setup step.
 
 - [ ] **Step 4: Commit**
 
