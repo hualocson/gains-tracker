@@ -1,6 +1,7 @@
 import { getWeightLogs, getWorkoutDates, getSettings } from "@/lib/repos";
 import { computeGainingVerdict } from "@/lib/domain/verdict";
 import { computeWeeklyStreak } from "@/lib/domain/streak";
+import Link from "next/link";
 import { VerdictCard } from "@/components/VerdictCard";
 import { ActionButton } from "@/components/ActionButton";
 
@@ -37,8 +38,8 @@ export default async function Home() {
         <ActionButton href="/badminton" label="Log Badminton" />
       </div>
       <div className="text-center space-x-4">
-        <a href="/progress" className="text-sm text-gray-500 underline">View progress →</a>
-        <a href="/settings" className="text-sm text-gray-500 underline">Settings</a>
+        <Link href="/progress" className="text-sm text-gray-500 underline">View progress →</Link>
+        <Link href="/settings" className="text-sm text-gray-500 underline">Settings</Link>
       </div>
     </main>
   );

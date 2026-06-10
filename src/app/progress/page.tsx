@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getWeightLogs, getSettings, getExerciseBests } from "@/lib/repos";
 import { WeightChart } from "@/components/WeightChart";
 
@@ -40,7 +41,7 @@ export default async function ProgressPage() {
           </ul>
         )}
       </section>
-      <a href="/" className="block text-center text-sm text-gray-500 underline">← back</a>
+      <Link href="/" className="block text-center text-sm text-gray-500 underline">← back</Link>
     </main>
   );
 }
