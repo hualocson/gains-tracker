@@ -1,6 +1,6 @@
 const DAY_MS = 86_400_000;
 
-function weekStart(date: Date): number {
+export function weekStart(date: Date): number {
   const day = date.getUTCDay();
   const mondayOffset = (day + 6) % 7;
   const ms = date.getTime() - mondayOffset * DAY_MS;

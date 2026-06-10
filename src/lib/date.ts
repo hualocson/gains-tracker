@@ -31,3 +31,13 @@ export function todayLabel(now: Date = new Date()): string {
     day: "numeric",
   }).format(now);
 }
+
+// Short label for a stored (UTC-midnight) date, e.g. "Jun 10" — used in log lists.
+// Formatted in UTC since stored dates are parsed as UTC midnight (see repos.ts).
+export function formatDayLabel(date: Date): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC",
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
