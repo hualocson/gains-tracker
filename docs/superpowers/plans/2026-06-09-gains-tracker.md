@@ -36,7 +36,7 @@ gains-tracker/
         badminton.ts                # estimateBadmintonKcal (§Task 8)
       auth.ts                       # cookie sign/verify helpers (§Task 9)
       repos.ts                      # thin DB query/insert functions (§Task 10)
-    middleware.ts                   # password-gate all routes (§Task 9)
+    proxy.ts                        # password-gate all routes — Next 16 renamed middleware.ts -> proxy.ts (§Task 9)
     app/
       login/page.tsx                # password form (§Task 9)
       api/auth/route.ts             # POST password -> set cookie (§Task 9)
@@ -141,22 +141,29 @@ In the `"scripts"` block add:
 
 Then install the seed runner: `npm install -D tsx`
 
-- [ ] **Step 3: Create `vitest.config.ts`**
+- [ ] **Step 3: Create `vitest.config.ts`** (the `resolve.alias` is required so tests can import `@/...`)
 
 ```ts
 import { defineConfig } from "vitest/config";
+import { fileURLToPath } from "node:url";
 
 export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts"],
     environment: "node",
   },
+  resolve: {
+    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
+  },
 });
 ```
 
-- [ ] **Step 4: Create `drizzle.config.ts`**
+- [ ] **Step 4: Create `drizzle.config.ts`** (loads `.env.local` explicitly — drizzle-kit does NOT read it automatically)
 
 ```ts
+import { config } from "dotenv";
+config({ path: ".env.local" });
+
 import { defineConfig } from "drizzle-kit";
 
 export default defineConfig({
@@ -166,6 +173,8 @@ export default defineConfig({
   dbCredentials: { url: process.env.DATABASE_URL! },
 });
 ```
+
+(Requires `dotenv`: `npm install dotenv`. Installed here rather than in Task 4 so migrations can read the env.)
 
 - [ ] **Step 5: Create `.env.local`** (fill in real values — Neon connection string + chosen password)
 
@@ -304,9 +313,13 @@ git commit -m "feat: add drizzle schema and neon client"
 - [ ] **Step 1: Write `src/db/seed.ts`** with the starting ladders
 
 ```ts
-import "dotenv/config";
-import { db } from "./client";
-import { exercises } from "./schema";
+import { config } from "dotenv";
+config({ path: ".env.local" });
+
+// Dynamic import AFTER env is loaded — ESM hoists static imports above the
+// config() call, and ./client calls neon(DATABASE_URL) at module-eval time.
+const { db } = await import("./client");
+const { exercises } = await import("./schema");
 
 // ladder_group -> ordered list of variation names (level = index + 1)
 const LADDERS: { group: string; category: string; names: string[] }[] = [
@@ -318,34 +331,32 @@ const LADDERS: { group: string; category: string; names: string[] }[] = [
   { group: "core", category: "core", names: ["Plank", "Leg Raises", "Hanging Knee Raise", "Hanging Leg Raise"] },
 ];
 
-async function main() {
-  const rows = LADDERS.flatMap((l) =>
-    l.names.map((name, i) => ({
-      name,
-      category: l.category,
-      ladderGroup: l.group,
-      level: i + 1,
-      repTargetSets: 3,
-      repTargetReps: 12,
-    })),
-  );
-  await db.insert(exercises).values(rows);
-  console.log(`Seeded ${rows.length} exercises`);
-}
+const rows = LADDERS.flatMap((l) =>
+  l.names.map((name, i) => ({
+    name,
+    category: l.category,
+    ladderGroup: l.group,
+    level: i + 1,
+    repTargetSets: 3,
+    repTargetReps: 12,
+  })),
+);
 
-main().then(() => process.exit(0));
+// idempotent: clear then insert, so re-running doesn't create duplicates
+await db.delete(exercises);
+await db.insert(exercises).values(rows);
+console.log(`Seeded ${rows.length} exercises`);
+process.exit(0);
 ```
 
-- [ ] **Step 2: Install dotenv (for the seed script env load)**
-
-```bash
-npm install dotenv
-```
+- [ ] **Step 2: dotenv** — already installed in Task 3. No action.
 
 - [ ] **Step 3: Run the seed**
 
 Run: `npm run db:seed`
-Expected: prints "Seeded 24 exercises" (5+3+3+4+5+4 = 24). Re-running duplicates rows — only run once.
+Expected: prints "Seeded 24 exercises" (5+3+3+4+5+4 = 24). The seed clears the table first, so it is safe to re-run.
+
+> ⚠️ Once Tasks 11–13 let you log real workouts, `workout_sets` rows reference `exercises.id`. Re-running the seed `DELETE`s exercises — do NOT re-seed after you have logged workouts, or you'll orphan/break those FK references. Seeding is a one-time setup step.
 
 - [ ] **Step 4: Commit**
 
@@ -824,7 +835,10 @@ async function hmac(secret: string): Promise<string> {
     key,
     new TextEncoder().encode(PAYLOAD),
   );
-  return Buffer.from(new Uint8Array(sig)).toString("hex");
+  // edge-runtime safe hex encoding (no Node Buffer in middleware)
+  return Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 export async function makeSessionToken(secret: string): Promise<string> {
@@ -859,7 +873,7 @@ export async function POST(req: Request) {
   const res = NextResponse.json({ ok: true });
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === "production", // localhost dev is http
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 365, // 1 year
@@ -868,13 +882,13 @@ export async function POST(req: Request) {
 }
 ```
 
-- [ ] **Step 3: Write `src/middleware.ts`**
+- [ ] **Step 3: Write `src/proxy.ts`** (Next.js 16 renamed the `middleware` file convention to `proxy`; the function must be named `proxy`)
 
 ```ts
 import { NextRequest, NextResponse } from "next/server";
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/auth";
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   const ok = await verifySessionToken(token, process.env.AUTH_SECRET!);
   if (!ok) {
@@ -887,7 +901,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   // protect everything except login page, auth API, and static assets
-  matcher: ["/((?!login|api/auth|_next/static|_next/image|favicon.ico|manifest.webmanifest|icons).*)"],
+  matcher: ["/((?!login|api/auth|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|icons).*)"],
 };
 ```
 
@@ -1732,29 +1746,12 @@ git commit -m "feat: progress screen with weight chart"
 ## Task 15: PWA (manifest + service worker) + settings bootstrap
 
 **Files:**
-- Modify: `next.config.ts`, `src/app/layout.tsx`
-- Create: `public/manifest.webmanifest`, `public/icons/` (192 + 512 png), `src/app/settings/page.tsx`
+- Modify: `src/app/layout.tsx`
+- Create: `public/manifest.webmanifest`, `public/sw.js`, `public/icons/` (192 + 512 png), `src/components/SwRegister.tsx`, `src/app/settings/page.tsx`
 
-- [ ] **Step 1: Install `next-pwa`**
+> **Note:** the original plan used `next-pwa`, which is effectively unmaintained and incompatible with Next.js 16 / Turbopack. We use a hand-rolled manifest + minimal service worker instead — fewer moving parts, no build-tool coupling.
 
-```bash
-npm install next-pwa
-```
-
-- [ ] **Step 2: Wrap `next.config.ts`**
-
-```ts
-import withPWAInit from "next-pwa";
-
-const withPWA = withPWAInit({
-  dest: "public",
-  disable: process.env.NODE_ENV === "development",
-});
-
-export default withPWA({});
-```
-
-- [ ] **Step 3: Create `public/manifest.webmanifest`**
+- [ ] **Step 1: Create `public/manifest.webmanifest`**
 
 ```json
 {
@@ -1765,24 +1762,70 @@ export default withPWA({});
   "background_color": "#ffffff",
   "theme_color": "#000000",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
 ```
 
-- [ ] **Step 4: Add icons** — place any 192×192 and 512×512 PNG at `public/icons/icon-192.png` and `public/icons/icon-512.png` (a plain colored square with "G" is fine for v1).
+- [ ] **Step 2: Generate icons** with `sharp` (rasterizes an SVG — a black rounded square with a white "G"):
 
-- [ ] **Step 5: Reference manifest in `src/app/layout.tsx`** — add to the exported `metadata`:
+```bash
+npm install -D sharp
+node --input-type=module -e '
+import sharp from "sharp";
+import { mkdirSync } from "node:fs";
+mkdirSync("public/icons", { recursive: true });
+const svg = (s) => Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}"><rect width="100%" height="100%" rx="${s*0.18}" fill="#000"/><text x="50%" y="52%" dy="0.35em" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="${s*0.6}" font-weight="bold" fill="#fff">G</text></svg>`);
+await sharp(svg(192)).png().toFile("public/icons/icon-192.png");
+await sharp(svg(512)).png().toFile("public/icons/icon-512.png");
+console.log("icons written");
+'
+```
+
+- [ ] **Step 3: Create `public/sw.js`** (minimal service worker — its presence + a fetch handler is what makes the app installable):
+
+```js
+// Minimal service worker for installability. No offline caching in v1.
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
+self.addEventListener("fetch", (e) => {
+  e.respondWith(fetch(e.request));
+});
+```
+
+- [ ] **Step 4: Create `src/components/SwRegister.tsx`** (registers the SW on the client):
+
+```tsx
+"use client";
+import { useEffect } from "react";
+
+export function SwRegister() {
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
+  return null;
+}
+```
+
+- [ ] **Step 5: Wire `src/app/layout.tsx`** — preserve the generated html/body/font setup. (a) Replace the exported `metadata`; (b) add a `viewport` export (Next 16 moved `themeColor` out of `metadata`); (c) import and render `<SwRegister />` inside `<body>`:
 
 ```ts
+import { SwRegister } from "@/components/SwRegister";
+
 export const metadata = {
   title: "Gains Tracker",
   manifest: "/manifest.webmanifest",
-  themeColor: "#000000",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "Gains" },
 };
+
+export const viewport = {
+  themeColor: "#000000",
+};
 ```
+(render `<SwRegister />` as the first child inside `<body>`, keeping the existing `{children}`.)
 
 - [ ] **Step 6: Create `src/app/settings/page.tsx`** (so target/current weight + weekly goal can be set — required before the verdict is meaningful)
 
