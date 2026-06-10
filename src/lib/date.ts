@@ -20,3 +20,14 @@ export function todayISO(now: Date = new Date()): string {
 export function todayDate(now: Date = new Date()): Date {
   return new Date(todayISO(now) + "T00:00:00Z");
 }
+
+// Human label for the app timezone, e.g. "Tue, Jun 10" — used as the eyebrow on
+// the Today hero so the verdict reads as a dated, daily coaching note.
+export function todayLabel(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: APP_TIMEZONE,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(now);
+}

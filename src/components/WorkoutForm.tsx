@@ -4,6 +4,19 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { todayISO } from "@/lib/date";
+import { History, Plus, Trophy } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Exercise = { id: number; name: string; category: string };
 type SetRow = { reps: string; addedWeightKg: string };
@@ -22,7 +35,9 @@ export function WorkoutForm({ exercises }: { exercises: Exercise[] }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!exerciseId) {return;}
+    if (!exerciseId) {
+      return;
+    }
     fetch(`/api/exercises/last?id=${exerciseId}`)
       .then((r) => r.json())
       .then(setLast);
@@ -44,8 +59,11 @@ export function WorkoutForm({ exercises }: { exercises: Exercise[] }) {
     });
     const data = await res.json();
     if (res.ok) {
-      if (data.nudges?.length) {setNudges(data.nudges);}
-      else {router.push("/");}
+      if (data.nudges?.length) {
+        setNudges(data.nudges);
+      } else {
+        router.push("/");
+      }
     }
   }
 
@@ -53,87 +71,115 @@ export function WorkoutForm({ exercises }: { exercises: Exercise[] }) {
     return (
       <div className="space-y-4">
         {nudges.map((n, i) => (
-          <div key={i} className="rounded-2xl bg-green-100 p-6 text-green-900">
-            💪 You crushed {n.fromName}! Try <b>{n.toName}</b> next time.
-          </div>
+          <Card key={i}>
+            <CardContent className="flex items-start gap-2">
+              <Trophy
+                className="text-chart-2 mt-0.5 size-5 shrink-0"
+                aria-hidden="true"
+              />
+              <span>
+                You crushed {n.fromName}! Try <b>{n.toName}</b> next time.
+              </span>
+            </CardContent>
+          </Card>
         ))}
-        <button
-          onClick={() => router.push("/")}
-          className="w-full rounded-xl bg-black p-4 text-white"
-        >
+        <Button onClick={() => router.push("/")} className="w-full">
           Done
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4">
-      <select
-        value={exerciseId}
-        onChange={(e) => setExerciseId(parseInt(e.target.value, 10))}
-        className="w-full rounded border p-3"
-      >
-        {exercises.map((ex) => (
-          <option key={ex.id} value={ex.id}>
-            {ex.name} ({ex.category})
-          </option>
-        ))}
-      </select>
+    <form onSubmit={submit} className="space-y-5">
+      <div className="space-y-1.5">
+        <Label>Exercise</Label>
+        <Select
+          value={String(exerciseId)}
+          onValueChange={(v) => setExerciseId(parseInt(v, 10))}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select exercise" />
+          </SelectTrigger>
+          <SelectContent>
+            {exercises.map((ex) => (
+              <SelectItem key={ex.id} value={String(ex.id)}>
+                {ex.name} ({ex.category})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {last && last.sets.length > 0 && (
-        <p className="text-sm text-gray-500">
-          Last time:{" "}
-          {last.sets
-            .map(
-              (s) => s.reps + (s.addedWeightKg ? `(+${s.addedWeightKg}kg)` : "")
-            )
-            .join(" · ")}{" "}
-          — beat it!
-        </p>
-      )}
-      {rows.map((r, i) => (
-        <div key={i} className="flex gap-2">
-          <input
-            type="number"
-            inputMode="numeric"
-            placeholder="reps"
-            value={r.reps}
-            onChange={(e) =>
-              setRows(
-                rows.map((x, j) =>
-                  j === i ? { ...x, reps: e.target.value } : x
-                )
+        <div className="bg-muted/40 text-muted-foreground flex items-start gap-2 rounded-lg p-3 text-sm">
+          <History className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <span>
+            <span className="text-foreground font-medium">Last time:</span>{" "}
+            {last.sets
+              .map(
+                (s) =>
+                  s.reps + (s.addedWeightKg ? ` (+${s.addedWeightKg}kg)` : "")
               )
-            }
-            className="flex-1 rounded border p-3"
-          />
-          <input
-            type="number"
-            step="0.5"
-            inputMode="decimal"
-            placeholder="+kg"
-            value={r.addedWeightKg}
-            onChange={(e) =>
-              setRows(
-                rows.map((x, j) =>
-                  j === i ? { ...x, addedWeightKg: e.target.value } : x
-                )
-              )
-            }
-            className="w-24 rounded border p-3"
-          />
+              .join(" · ")}{" "}
+            — beat it.
+          </span>
         </div>
-      ))}
-      <button
-        type="button"
-        onClick={() => setRows([...rows, { reps: "", addedWeightKg: "" }])}
-        className="text-sm text-gray-600 underline"
-      >
-        + add set
-      </button>
-      <button className="w-full rounded-xl bg-black p-4 font-semibold text-white">
+      )}
+
+      <div className="space-y-2">
+        <Label>Sets</Label>
+        {rows.map((r, i) => (
+          <div key={i} className="flex items-center gap-2.5">
+            <span className="text-muted-foreground w-10 shrink-0 text-sm tabular-nums">
+              #{i + 1}
+            </span>
+            <Input
+              type="number"
+              inputMode="numeric"
+              placeholder="reps"
+              value={r.reps}
+              onChange={(e) =>
+                setRows(
+                  rows.map((x, j) =>
+                    j === i ? { ...x, reps: e.target.value } : x
+                  )
+                )
+              }
+              className="flex-1"
+            />
+            <Input
+              type="number"
+              step="0.5"
+              inputMode="decimal"
+              placeholder="+kg"
+              value={r.addedWeightKg}
+              onChange={(e) =>
+                setRows(
+                  rows.map((x, j) =>
+                    j === i ? { ...x, addedWeightKg: e.target.value } : x
+                  )
+                )
+              }
+              className="w-24"
+            />
+          </div>
+        ))}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-foreground"
+          onClick={() => setRows([...rows, { reps: "", addedWeightKg: "" }])}
+        >
+          <Plus className="size-4" aria-hidden="true" />
+          Add set
+        </Button>
+      </div>
+
+      <Button type="submit" className="w-full">
         Save workout
-      </button>
+      </Button>
     </form>
   );
 }

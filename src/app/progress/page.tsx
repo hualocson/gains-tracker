@@ -1,7 +1,8 @@
-import Link from "next/link";
-
 import { getExerciseBests, getSettings, getWeightLogs } from "@/lib/repos";
 
+import { Card, CardContent } from "@/components/ui/card";
+
+import { PageHeader } from "@/components/PageHeader";
 import { WeightChart } from "@/components/WeightChart";
 
 export const dynamic = "force-dynamic";
@@ -18,39 +19,57 @@ export default async function ProgressPage() {
   }));
 
   return (
-    <main className="mx-auto max-w-md space-y-6 p-5">
-      <h1 className="text-2xl font-bold">Progress</h1>
-      <section>
-        <h2 className="mb-2 text-sm font-semibold text-gray-600">Bodyweight</h2>
+    <main className="mx-auto max-w-md space-y-7 px-5 pt-5 pb-10">
+      <PageHeader title="Progress" eyebrow="Over time" />
+
+      <section className="space-y-3">
+        <h2 className="eyebrow text-muted-foreground px-1">Bodyweight</h2>
         {data.length === 0 ? (
-          <p className="text-gray-500">No weight logged yet.</p>
+          <Card>
+            <CardContent className="text-muted-foreground py-8 text-center text-sm">
+              No weight logged yet.
+            </CardContent>
+          </Card>
         ) : (
-          <WeightChart data={data} target={settings?.targetWeightKg ?? null} />
+          <Card className="py-4">
+            <CardContent className="px-2">
+              <WeightChart
+                data={data}
+                target={settings?.targetWeightKg ?? null}
+              />
+            </CardContent>
+          </Card>
         )}
       </section>
-      <section>
-        <h2 className="mb-2 text-sm font-semibold text-gray-600">
-          Exercise bests (max reps in a set)
+
+      <section className="space-y-3">
+        <h2 className="eyebrow text-muted-foreground px-1">
+          Exercise bests · max reps in a set
         </h2>
         {bests.length === 0 ? (
-          <p className="text-gray-500">No workouts logged yet.</p>
+          <Card>
+            <CardContent className="text-muted-foreground py-8 text-center text-sm">
+              No workouts logged yet.
+            </CardContent>
+          </Card>
         ) : (
-          <ul className="divide-y rounded-xl border">
-            {bests.map((b) => (
-              <li key={b.name} className="flex justify-between p-3 text-sm">
-                <span>{b.name}</span>
-                <span className="font-semibold">{b.bestReps} reps</span>
-              </li>
-            ))}
-          </ul>
+          <Card className="py-0">
+            <CardContent className="divide-border divide-y px-0">
+              {bests.map((b) => (
+                <div
+                  key={b.name}
+                  className="flex items-center justify-between px-4 py-3.5 text-sm"
+                >
+                  <span>{b.name}</span>
+                  <span className="font-semibold tabular-nums">
+                    {b.bestReps} reps
+                  </span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         )}
       </section>
-      <Link
-        href="/"
-        className="block text-center text-sm text-gray-500 underline"
-      >
-        ← back
-      </Link>
     </main>
   );
 }

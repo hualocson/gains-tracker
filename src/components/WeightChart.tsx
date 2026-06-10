@@ -1,13 +1,27 @@
 "use client";
 import {
+  CartesianGrid,
   Line,
   LineChart,
   ReferenceLine,
-  ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+
+// ChartContainer injects `--color-<key>` from this config (mapped to the
+// DESIGN.md sticker palette via our --chart-* tokens) and themes the axes,
+// grid and tooltip — so the series resolve to design tokens, not literals.
+const chartConfig = {
+  weightKg: { label: "Bodyweight", color: "var(--chart-1)" },
+  target: { label: "Target", color: "var(--chart-2)" },
+} satisfies ChartConfig;
 
 export function WeightChart({
   data,
@@ -17,28 +31,46 @@ export function WeightChart({
   target: number | null;
 }) {
   return (
-    <ResponsiveContainer width="100%" height={240}>
+    <ChartContainer config={chartConfig} className="h-60 w-full">
       <LineChart
+        accessibilityLayer
         data={data}
-        margin={{ top: 10, right: 10, bottom: 0, left: -20 }}
+        margin={{ top: 12, right: 12, left: 4, bottom: 0 }}
       >
-        <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+        <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey="date"
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          minTickGap={16}
+        />
         <YAxis
           domain={["dataMin - 1", "dataMax + 1"]}
-          tick={{ fontSize: 10 }}
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          width={40}
         />
-        <Tooltip />
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent indicator="line" />}
+        />
         {target !== null && (
-          <ReferenceLine y={target} stroke="#16a34a" strokeDasharray="4 4" />
+          <ReferenceLine
+            y={target}
+            stroke="var(--color-target)"
+            strokeDasharray="4 4"
+          />
         )}
         <Line
-          type="monotone"
           dataKey="weightKg"
-          stroke="#000"
-          dot={false}
+          type="monotone"
+          stroke="var(--color-weightKg)"
           strokeWidth={2}
+          dot={false}
         />
       </LineChart>
-    </ResponsiveContainer>
+    </ChartContainer>
   );
 }

@@ -4,6 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { todayISO } from "@/lib/date";
+import { cn } from "@/lib/utils";
+import { Flame } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+import { PageHeader } from "@/components/PageHeader";
 
 export default function BadmintonPage() {
   const [duration, setDuration] = useState("");
@@ -23,49 +32,77 @@ export default function BadmintonPage() {
       }),
     });
     const data = await res.json();
-    if (res.ok) {setKcal(data.kcal);}
+    if (res.ok) {
+      setKcal(data.kcal);
+    }
   }
 
   return (
-    <main className="mx-auto max-w-md space-y-4 p-5">
-      <h1 className="text-2xl font-bold">Log Badminton</h1>
+    <main className="mx-auto max-w-md space-y-6 px-5 pt-5 pb-10">
+      <PageHeader title="Badminton" eyebrow="Log today" />
       {kcal !== null ? (
-        <div className="rounded-2xl bg-amber-100 p-6 text-amber-900">
-          <p className="font-bold">~{kcal} kcal burned 🏸</p>
-          <p className="text-sm">Eat extra today to stay in surplus.</p>
-          <button
-            onClick={() => router.push("/")}
-            className="mt-4 rounded bg-black px-4 py-2 text-white"
-          >
-            Done
-          </button>
-        </div>
+        <Card>
+          <CardContent className="space-y-5">
+            <div className="flex items-center gap-4">
+              <span className="bg-chart-3/12 flex size-12 shrink-0 items-center justify-center rounded-xl">
+                <Flame className="text-chart-3 size-6" aria-hidden="true" />
+              </span>
+              <div>
+                <div className="text-3xl leading-none font-bold tabular-nums">
+                  ~{kcal}
+                </div>
+                <div className="text-muted-foreground mt-1.5 text-sm">
+                  kcal burned
+                </div>
+              </div>
+            </div>
+            <p className="text-muted-foreground text-sm">
+              Add it back at the table — eat extra today to stay in surplus.
+            </p>
+            <Button onClick={() => router.push("/")} className="w-full">
+              Done
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
-        <form onSubmit={submit} className="space-y-4">
-          <input
-            type="number"
-            inputMode="numeric"
-            required
-            value={duration}
-            onChange={(e) => setDuration(e.target.value)}
-            placeholder="Duration (minutes)"
-            className="w-full rounded border p-3 text-lg"
-          />
-          <div className="flex gap-2">
-            {(["low", "med", "high"] as const).map((i) => (
-              <button
-                type="button"
-                key={i}
-                onClick={() => setIntensity(i)}
-                className={`flex-1 rounded-xl p-3 capitalize ${intensity === i ? "bg-black text-white" : "bg-gray-100"}`}
-              >
-                {i}
-              </button>
-            ))}
+        <form onSubmit={submit} className="space-y-5">
+          <div className="space-y-1.5">
+            <Label htmlFor="duration">Duration (minutes)</Label>
+            <Input
+              id="duration"
+              type="number"
+              inputMode="numeric"
+              required
+              autoFocus
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              placeholder="e.g. 60"
+            />
           </div>
-          <button className="w-full rounded-xl bg-black p-4 font-semibold text-white">
-            Save
-          </button>
+          <div className="space-y-1.5">
+            <Label>Intensity</Label>
+            <div className="bg-muted/40 grid grid-cols-3 gap-1 rounded-xl p-1">
+              {(["low", "med", "high"] as const).map((i) => (
+                <button
+                  type="button"
+                  key={i}
+                  onClick={() => setIntensity(i)}
+                  aria-pressed={intensity === i}
+                  className={cn(
+                    "focus-visible:ring-ring/50 h-10 rounded-lg text-sm font-medium capitalize transition-colors outline-none focus-visible:ring-[3px]",
+                    intensity === i
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {i}
+                </button>
+              ))}
+            </div>
+          </div>
+          <Button type="submit" className="w-full">
+            Save session
+          </Button>
         </form>
       )}
     </main>

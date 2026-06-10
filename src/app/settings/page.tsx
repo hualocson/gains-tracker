@@ -3,6 +3,12 @@ import { useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+import { PageHeader } from "@/components/PageHeader";
+
 export default function SettingsPage() {
   const [target, setTarget] = useState("");
   const [current, setCurrent] = useState("");
@@ -32,49 +38,51 @@ export default function SettingsPage() {
         weeklyWorkoutGoal: parseInt(goal, 10),
       }),
     });
-    if (res.ok) {router.push("/");}
+    if (res.ok) {
+      router.push("/");
+    }
   }
 
   return (
-    <main className="mx-auto max-w-md space-y-4 p-5">
-      <h1 className="text-2xl font-bold">Settings</h1>
-      <form onSubmit={submit} className="space-y-4">
-        <label className="block text-sm">
-          Current weight (kg)
-          <input
+    <main className="mx-auto max-w-md space-y-6 px-5 pt-5 pb-10">
+      <PageHeader title="Settings" eyebrow="Your targets" />
+      <form onSubmit={submit} className="space-y-5">
+        <div className="space-y-1.5">
+          <Label htmlFor="current">Current weight (kg)</Label>
+          <Input
+            id="current"
             type="number"
             step="0.1"
             required
             value={current}
             onChange={(e) => setCurrent(e.target.value)}
-            className="mt-1 w-full rounded border p-3"
           />
-        </label>
-        <label className="block text-sm">
-          Target weight (kg)
-          <input
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="target">Target weight (kg)</Label>
+          <Input
+            id="target"
             type="number"
             step="0.1"
             required
             value={target}
             onChange={(e) => setTarget(e.target.value)}
-            className="mt-1 w-full rounded border p-3"
           />
-        </label>
-        <label className="block text-sm">
-          Weekly workout goal
-          <input
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="goal">Weekly workout goal</Label>
+          <Input
+            id="goal"
             type="number"
             inputMode="numeric"
             required
             value={goal}
             onChange={(e) => setGoal(e.target.value)}
-            className="mt-1 w-full rounded border p-3"
           />
-        </label>
-        <button className="w-full rounded-xl bg-black p-4 font-semibold text-white">
+        </div>
+        <Button type="submit" className="w-full">
           Save
-        </button>
+        </Button>
       </form>
     </main>
   );
