@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { todayISO } from "@/lib/date";
 
 export default function BadmintonPage() {
   const [duration, setDuration] = useState("");
@@ -14,7 +15,7 @@ export default function BadmintonPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        date: new Date().toISOString().slice(0, 10),
+        date: todayISO(),
         durationMin: parseInt(duration, 10),
         intensity,
       }),

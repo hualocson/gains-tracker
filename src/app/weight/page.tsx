@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { todayISO } from "@/lib/date";
 
 export default function WeightPage() {
   const [weight, setWeight] = useState("");
@@ -13,7 +14,7 @@ export default function WeightPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        date: new Date().toISOString().slice(0, 10),
+        date: todayISO(),
         weightKg: parseFloat(weight),
         note: note || null,
       }),

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { todayISO } from "@/lib/date";
 
 type Exercise = { id: number; name: string; category: string };
 type SetRow = { reps: string; addedWeightKg: string };
@@ -32,7 +33,7 @@ export function WorkoutForm({ exercises }: { exercises: Exercise[] }) {
     const res = await fetch("/api/workouts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: new Date().toISOString().slice(0, 10), note: null, sets }),
+      body: JSON.stringify({ date: todayISO(), note: null, sets }),
     });
     const data = await res.json();
     if (res.ok) {

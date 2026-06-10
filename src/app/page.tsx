@@ -4,11 +4,12 @@ import { computeWeeklyStreak } from "@/lib/domain/streak";
 import Link from "next/link";
 import { VerdictCard } from "@/components/VerdictCard";
 import { ActionButton } from "@/components/ActionButton";
+import { todayDate } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const now = new Date();
+  const now = todayDate();
   const [logs, workoutDates, settings] = await Promise.all([
     getWeightLogs(),
     getWorkoutDates(),

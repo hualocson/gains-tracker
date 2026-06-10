@@ -7,7 +7,7 @@ import {
   bodyweightLogs,
   badmintonSessions,
 } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, gt, asc, desc } from "drizzle-orm";
 
 export async function getSettings() {
   const rows = await db.select().from(settings).where(eq(settings.id, 1));
@@ -34,10 +34,14 @@ export async function getAllExercises() {
 }
 
 export async function getNextLadderExercise(ladderGroup: string, level: number) {
+  // next level UP the ladder; `gt` (not level+1) so a deleted mid-ladder
+  // exercise doesn't dead-end progression at the gap
   const rows = await db
     .select()
     .from(exercises)
-    .where(and(eq(exercises.ladderGroup, ladderGroup), eq(exercises.level, level + 1)));
+    .where(and(eq(exercises.ladderGroup, ladderGroup), gt(exercises.level, level)))
+    .orderBy(asc(exercises.level))
+    .limit(1);
   return rows[0] ?? null;
 }
 
