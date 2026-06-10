@@ -1,10 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
 import { todayISO } from "@/lib/date";
-import { History, Plus, Trophy } from "lucide-react";
+import { History, Plus, Trophy, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +19,9 @@ import {
 } from "@/components/ui/select";
 
 type Exercise = { id: number; name: string; category: string };
-type SetRow = { reps: string; addedWeightKg: string };
+// `id` is a stable client-side key so removing a row reconciles the controlled
+// inputs correctly (index keys would shift values onto the wrong row).
+type SetRow = { id: number; reps: string; addedWeightKg: string };
 type LastInfo = {
   date: string | null;
   sets: { reps: number; addedWeightKg: number | null }[];
@@ -27,7 +29,10 @@ type LastInfo = {
 
 export function WorkoutForm({ exercises }: { exercises: Exercise[] }) {
   const [exerciseId, setExerciseId] = useState(exercises[0]?.id ?? 0);
-  const [rows, setRows] = useState<SetRow[]>([{ reps: "", addedWeightKg: "" }]);
+  const [rows, setRows] = useState<SetRow[]>([
+    { id: 0, reps: "", addedWeightKg: "" },
+  ]);
+  const nextId = useRef(1);
   const [nudges, setNudges] = useState<
     { fromName?: string; toName?: string }[]
   >([]);
@@ -130,8 +135,8 @@ export function WorkoutForm({ exercises }: { exercises: Exercise[] }) {
       <div className="space-y-2">
         <Label>Sets</Label>
         {rows.map((r, i) => (
-          <div key={i} className="flex items-center gap-2.5">
-            <span className="text-muted-foreground w-10 shrink-0 text-sm tabular-nums">
+          <div key={r.id} className="flex items-center gap-2.5">
+            <span className="text-muted-foreground w-7 shrink-0 text-sm tabular-nums">
               #{i + 1}
             </span>
             <Input
@@ -140,9 +145,9 @@ export function WorkoutForm({ exercises }: { exercises: Exercise[] }) {
               placeholder="reps"
               value={r.reps}
               onChange={(e) =>
-                setRows(
-                  rows.map((x, j) =>
-                    j === i ? { ...x, reps: e.target.value } : x
+                setRows((rs) =>
+                  rs.map((x) =>
+                    x.id === r.id ? { ...x, reps: e.target.value } : x
                   )
                 )
               }
@@ -155,14 +160,26 @@ export function WorkoutForm({ exercises }: { exercises: Exercise[] }) {
               placeholder="+kg"
               value={r.addedWeightKg}
               onChange={(e) =>
-                setRows(
-                  rows.map((x, j) =>
-                    j === i ? { ...x, addedWeightKg: e.target.value } : x
+                setRows((rs) =>
+                  rs.map((x) =>
+                    x.id === r.id ? { ...x, addedWeightKg: e.target.value } : x
                   )
                 )
               }
               className="w-24"
             />
+            {rows.length > 1 && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Remove set ${i + 1}`}
+                className="text-muted-foreground hover:text-destructive shrink-0"
+                onClick={() => setRows((rs) => rs.filter((x) => x.id !== r.id))}
+              >
+                <X className="size-4" aria-hidden="true" />
+              </Button>
+            )}
           </div>
         ))}
         <Button
@@ -170,7 +187,12 @@ export function WorkoutForm({ exercises }: { exercises: Exercise[] }) {
           variant="ghost"
           size="sm"
           className="text-muted-foreground hover:text-foreground"
-          onClick={() => setRows([...rows, { reps: "", addedWeightKg: "" }])}
+          onClick={() =>
+            setRows((rs) => [
+              ...rs,
+              { id: nextId.current++, reps: "", addedWeightKg: "" },
+            ])
+          }
         >
           <Plus className="size-4" aria-hidden="true" />
           Add set
