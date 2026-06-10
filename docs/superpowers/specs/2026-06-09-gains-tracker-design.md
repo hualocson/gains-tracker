@@ -6,7 +6,7 @@
 ## 1. Purpose
 
 A small personal PWA that helps the owner **gain weight and muscle** through home
-calisthenics + badminton. It is deliberately *not* a full fitness platform. Its job
+calisthenics + badminton. It is deliberately _not_ a full fitness platform. Its job
 is to answer one question every day:
 
 > **"Am I gaining, and what do I do today?"**
@@ -14,10 +14,11 @@ is to answer one question every day:
 Every feature exists to serve that question or to keep the owner motivated.
 
 ### Goal context (why this shape)
+
 Weight/muscle gain depends, in order, on: (1) a calorie surplus, (2) progressive
 overload, (3) recovery. The app cannot eat or train for the owner — it is a
 **feedback loop**. The single highest-value loop is the weekly bodyweight trend:
-*if weight isn't trending up, eat more.* Badminton burns calories and therefore acts
+_if weight isn't trending up, eat more._ Badminton burns calories and therefore acts
 as a "tax" against the surplus, so the app surfaces that explicitly.
 
 Detailed meal/calorie logging is intentionally **out of scope** (too tedious to
@@ -49,6 +50,7 @@ sustain). The app infers "eat more / on track" from the bodyweight trend instead
 ## 5. Screens (5, mobile-first)
 
 ### 5.1 Home / Today (the money screen)
+
 - **Verdict card** — derived from bodyweight trend (see §7.2):
   - "📈 On track — keep eating" (gaining at a healthy rate)
   - "⚠️ Flat/down — eat more" (not gaining over the window)
@@ -58,6 +60,7 @@ sustain). The app infers "eat more / on track" from the bodyweight trend instead
 - **Three primary actions**: Log Workout · Log Weight · Log Badminton.
 
 ### 5.2 Log Workout
+
 - Pick an exercise from the seeded ladders.
 - Enter sets: reps + optional `added_weight_kg` (for weighted calisthenics, e.g. a
   loaded backpack or dip belt).
@@ -65,15 +68,18 @@ sustain). The app infers "eat more / on track" from the bodyweight trend instead
 - On save: if the rep target is met, show a **progression nudge** (see §7.1).
 
 ### 5.3 Log Weight
+
 - Single number entry (kg), optional note.
 - Encouraged as a (near-)daily habit since it powers the verdict.
 
 ### 5.4 Log Badminton
+
 - Duration (minutes) + intensity (low / med / high).
 - Shows a **calorie-tax nudge**: rough estimate of calories burned →
   "eat ~X extra today to stay in surplus." Estimate is intentionally rough.
 
 ### 5.5 Progress
+
 - Bodyweight chart with a rolling-average trend line + target line.
 - Per-exercise history: best reps / current ladder level over time.
 
@@ -124,6 +130,7 @@ badminton_sessions
 ```
 
 ### Seeded ladders (starting set)
+
 Standard calisthenics progressions across push/pull/legs/core. Example
 `horizontal_push` ladder:
 knee push-up (1) → push-up (2) → diamond push-up (3) → archer push-up (4) →
@@ -135,6 +142,7 @@ archer → one-arm), legs (squat → split squat → pistol progressions), core
 ## 7. The two "brains"
 
 ### 7.1 Progression nudge
+
 - Each exercise has a target (`rep_target_sets` × `rep_target_reps`, default 3×12).
 - When a logged workout meets that target for an exercise, the app suggests the next
   `level` in the same `ladder_group`.
@@ -142,6 +150,7 @@ archer → one-arm), legs (squat → split squat → pistol progressions), core
 - Nudge is a suggestion only; the owner chooses what to log next time.
 
 ### 7.2 Gaining verdict
+
 - Compute a rolling 7-day average of `bodyweight_logs`.
 - Look at the slope over a ~2–3 week window.
 - Healthy bulk rate ≈ **+0.25–0.5 kg/week**.
@@ -151,6 +160,7 @@ archer → one-arm), legs (squat → split squat → pistol progressions), core
 - Also display absolute progress: current weight → target weight.
 
 ### 7.3 Weekly streak
+
 - A **week** counts as "hit" when the number of logged `workouts` in that week ≥
   `settings.weekly_workout_goal` (default 3).
 - Streak = number of consecutive completed weeks that were hit, up to the current week.
@@ -158,6 +168,7 @@ archer → one-arm), legs (squat → split squat → pistol progressions), core
   not the strength training the goal targets) — but this is revisitable.
 
 ### 7.4 Badminton calorie tax
+
 - Rough estimate: `intensity_factor × duration_min` → approx kcal
   (e.g. low ≈ 5, med ≈ 7, high ≈ 9 kcal/min — tuned at plan time).
 - Surfaced as a nudge ("you burned ~X today, eat extra"), never as a hard number to

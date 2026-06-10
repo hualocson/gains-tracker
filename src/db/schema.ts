@@ -1,10 +1,10 @@
 import {
-  pgTable,
-  serial,
-  integer,
-  text,
   date,
   doublePrecision,
+  integer,
+  pgTable,
+  serial,
+  text,
 } from "drizzle-orm/pg-core";
 
 export const settings = pgTable("settings", {

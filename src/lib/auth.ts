@@ -6,12 +6,12 @@ async function hmac(secret: string): Promise<string> {
     new TextEncoder().encode(secret),
     { name: "HMAC", hash: "SHA-256" },
     false,
-    ["sign"],
+    ["sign"]
   );
   const sig = await crypto.subtle.sign(
     "HMAC",
     key,
-    new TextEncoder().encode(PAYLOAD),
+    new TextEncoder().encode(PAYLOAD)
   );
   // edge-runtime safe hex encoding (no Node Buffer in middleware)
   return Array.from(new Uint8Array(sig))
@@ -25,9 +25,9 @@ export async function makeSessionToken(secret: string): Promise<string> {
 
 export async function verifySessionToken(
   token: string | undefined,
-  secret: string,
+  secret: string
 ): Promise<boolean> {
-  if (!token) return false;
+  if (!token) {return false;}
   const expected = await hmac(secret);
   return token.length === expected.length && token === expected;
 }

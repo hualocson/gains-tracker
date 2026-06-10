@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { makeSessionToken, verifySessionToken } from "@/lib/auth";
+import { describe, expect, it } from "vitest";
 
 describe("auth helpers", () => {
   it("verifies a token it just made", async () => {

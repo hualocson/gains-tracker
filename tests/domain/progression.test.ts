@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { computeProgressionNudge } from "@/lib/domain/progression";
+import { describe, expect, it } from "vitest";
 
 const exercise = {
   id: 2,
@@ -29,11 +29,15 @@ describe("computeProgressionNudge", () => {
 
   it("does not nudge when too few qualifying sets", () => {
     const sets = [{ reps: 12 }, { reps: 10 }, { reps: 12 }];
-    expect(computeProgressionNudge(sets, exercise, nextExercise).shouldNudge).toBe(false);
+    expect(
+      computeProgressionNudge(sets, exercise, nextExercise).shouldNudge
+    ).toBe(false);
   });
 
   it("does not nudge when no next exercise exists (top of ladder)", () => {
     const sets = [{ reps: 20 }, { reps: 20 }, { reps: 20 }];
-    expect(computeProgressionNudge(sets, exercise, null).shouldNudge).toBe(false);
+    expect(computeProgressionNudge(sets, exercise, null).shouldNudge).toBe(
+      false
+    );
   });
 });

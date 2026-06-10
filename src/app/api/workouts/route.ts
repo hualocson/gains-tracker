@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
+
+import { computeProgressionNudge } from "@/lib/domain/progression";
 import {
   createWorkout,
   getAllExercises,
   getNextLadderExercise,
 } from "@/lib/repos";
-import { computeProgressionNudge } from "@/lib/domain/progression";
 
-type SetInput = { exerciseId: number; reps: number; addedWeightKg: number | null };
+type SetInput = {
+  exerciseId: number;
+  reps: number;
+  addedWeightKg: number | null;
+};
 
 export async function POST(req: Request) {
   const { date, note, sets } = (await req.json()) as {
@@ -19,7 +24,10 @@ export async function POST(req: Request) {
   }
   for (const s of sets) {
     if (typeof s.reps !== "number" || s.reps <= 0 || s.reps > 1000) {
-      return NextResponse.json({ ok: false, error: "invalid reps" }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: "invalid reps" },
+        { status: 400 }
+      );
     }
   }
 
@@ -31,7 +39,7 @@ export async function POST(req: Request) {
       setIndex: i,
       reps: s.reps,
       addedWeightKg: s.addedWeightKg ?? null,
-    })),
+    }))
   );
 
   const all = await getAllExercises();
@@ -40,11 +48,17 @@ export async function POST(req: Request) {
   const exerciseIds = [...new Set(sets.map((s) => s.exerciseId))];
   for (const exId of exerciseIds) {
     const ex = byId.get(exId);
-    if (!ex) continue;
-    const exSets = sets.filter((s) => s.exerciseId === exId).map((s) => ({ reps: s.reps }));
+    if (!ex) {continue;}
+    const exSets = sets
+      .filter((s) => s.exerciseId === exId)
+      .map((s) => ({ reps: s.reps }));
     const next = await getNextLadderExercise(ex.ladderGroup, ex.level);
-    const nudge = computeProgressionNudge(exSets, ex, next ? { id: next.id, name: next.name } : null);
-    if (nudge.shouldNudge) nudges.push(nudge);
+    const nudge = computeProgressionNudge(
+      exSets,
+      ex,
+      next ? { id: next.id, name: next.name } : null
+    );
+    if (nudge.shouldNudge) {nudges.push(nudge);}
   }
 
   return NextResponse.json({ ok: true, nudges });

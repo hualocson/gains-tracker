@@ -11,8 +11,8 @@ Each commit is **one logical change** — a single, self-contained unit of work.
   lint and typecheck:
   - `bun run lint`
   - `bun run typecheck`
-  Never commit a state that is knowingly broken. Run `npm run build` before
-  pushing (see `AGENTS.md`).
+    Never commit a state that is knowingly broken. Run `npm run build` before
+    pushing (see `AGENTS.md`).
 - **Split by hunk when a file spans concerns.** If one file contains changes
   belonging to two logical commits, stage the relevant hunks separately
   (`git add -p`, or stage controlled file states) so each commit is clean.
@@ -27,7 +27,7 @@ Follow **Conventional Commits**: `<type>: <summary>`.
 - Types in use: `feat`, `fix`, `refactor`, `docs`, `chore`, `build`, `test`.
 - Summary is lowercase, imperative, and concise — describe the change, not the
   process. Skip trailing punctuation.
-- Add a body only when the *why* is not obvious from the summary.
+- Add a body only when the _why_ is not obvious from the summary.
 
 Examples:
 

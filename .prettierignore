@@ -1,0 +1,17 @@
+# Build artifacts
+.next/
+.turbo/
+out/
+dist/
+build/
+node_modules/
+compiled/
+
+# Generated / lockfiles
+*.tsbuildinfo
+next-env.d.ts
+bun.lock
+public/sw.js
+
+# Drizzle-generated migration metadata
+drizzle/meta/

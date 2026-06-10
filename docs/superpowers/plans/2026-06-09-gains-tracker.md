@@ -4,11 +4,12 @@
 
 **Goal:** Build a single-user PWA that logs home calisthenics + badminton, nudges progression, and tells the owner each day whether they're gaining weight so they keep eating in a surplus.
 
-**Architecture:** Next.js App Router front-and-back. Three *pure* domain functions (gaining verdict, progression nudge, weekly streak) live in `lib/domain/` with no DB dependency so they're unit-tested in isolation. Thin Drizzle repositories wrap Neon Postgres; thin API routes call repositories + domain logic; server components fetch and render. A single signed cookie set from one password (in `middleware.ts`) guards everything.
+**Architecture:** Next.js App Router front-and-back. Three _pure_ domain functions (gaining verdict, progression nudge, weekly streak) live in `lib/domain/` with no DB dependency so they're unit-tested in isolation. Thin Drizzle repositories wrap Neon Postgres; thin API routes call repositories + domain logic; server components fetch and render. A single signed cookie set from one password (in `middleware.ts`) guards everything.
 
 **Tech Stack:** Next.js 15 (App Router) + TypeScript, Tailwind CSS, Neon Postgres, Drizzle ORM (`drizzle-orm` + `@neondatabase/serverless`), Vitest for unit tests, deployed on Vercel. PWA via `next-pwa`.
 
 **Key conventions decided here (so later tasks stay consistent):**
+
 - Weights/heights stored as `doublePrecision` (come back as JS `number`, no string parsing). Reps/durations/levels as `integer`.
 - Domain functions take an explicit `today: Date` / data arrays — they never read the clock or the DB, so tests are deterministic.
 - Verdict states: `"insufficient_data" | "eat_more" | "on_track" | "too_fast"`.
@@ -67,6 +68,7 @@ gains-tracker/
 ## Task 1: Scaffold Next.js + Tailwind project
 
 **Files:**
+
 - Create: whole project tree via CLI
 - Modify: `package.json`, `src/app/page.tsx`
 
@@ -116,6 +118,7 @@ git commit -m "chore: scaffold Next.js + Tailwind app"
 ## Task 2: Add Vitest, Drizzle, Neon deps + test config
 
 **Files:**
+
 - Modify: `package.json`
 - Create: `vitest.config.ts`, `drizzle.config.ts`, `.env.local`, `.gitignore` (append)
 
@@ -144,8 +147,8 @@ Then install the seed runner: `npm install -D tsx`
 - [ ] **Step 3: Create `vitest.config.ts`** (the `resolve.alias` is required so tests can import `@/...`)
 
 ```ts
-import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
@@ -162,9 +165,9 @@ export default defineConfig({
 
 ```ts
 import { config } from "dotenv";
-config({ path: ".env.local" });
-
 import { defineConfig } from "drizzle-kit";
+
+config({ path: ".env.local" });
 
 export default defineConfig({
   schema: "./src/db/schema.ts",
@@ -209,18 +212,19 @@ git commit -m "chore: add vitest, drizzle, neon tooling and config"
 ## Task 3: Define the Drizzle schema
 
 **Files:**
+
 - Create: `src/db/schema.ts`, `src/db/client.ts`
 
 - [ ] **Step 1: Write `src/db/schema.ts`**
 
 ```ts
 import {
-  pgTable,
-  serial,
-  integer,
-  text,
   date,
   doublePrecision,
+  integer,
+  pgTable,
+  serial,
+  text,
 } from "drizzle-orm/pg-core";
 
 export const settings = pgTable("settings", {
@@ -281,6 +285,7 @@ export const badmintonSessions = pgTable("badminton_sessions", {
 ```ts
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
+
 import * as schema from "./schema";
 
 const sql = neon(process.env.DATABASE_URL!);
@@ -308,12 +313,14 @@ git commit -m "feat: add drizzle schema and neon client"
 ## Task 4: Seed the exercise ladders
 
 **Files:**
+
 - Create: `src/db/seed.ts`
 
 - [ ] **Step 1: Write `src/db/seed.ts`** with the starting ladders
 
 ```ts
 import { config } from "dotenv";
+
 config({ path: ".env.local" });
 
 // Dynamic import AFTER env is loaded — ESM hoists static imports above the
@@ -323,12 +330,53 @@ const { exercises } = await import("./schema");
 
 // ladder_group -> ordered list of variation names (level = index + 1)
 const LADDERS: { group: string; category: string; names: string[] }[] = [
-  { group: "horizontal_push", category: "push", names: ["Knee Push-up", "Push-up", "Diamond Push-up", "Archer Push-up", "One-arm Push-up"] },
-  { group: "vertical_push", category: "push", names: ["Pike Push-up", "Elevated Pike Push-up", "Wall Handstand Push-up"] },
-  { group: "horizontal_pull", category: "pull", names: ["Incline Row", "Inverted Row", "Wide Inverted Row"] },
-  { group: "vertical_pull", category: "pull", names: ["Negative Pull-up", "Pull-up", "Archer Pull-up", "One-arm Pull-up Progression"] },
-  { group: "squat", category: "legs", names: ["Bodyweight Squat", "Split Squat", "Bulgarian Split Squat", "Assisted Pistol Squat", "Pistol Squat"] },
-  { group: "core", category: "core", names: ["Plank", "Leg Raises", "Hanging Knee Raise", "Hanging Leg Raise"] },
+  {
+    group: "horizontal_push",
+    category: "push",
+    names: [
+      "Knee Push-up",
+      "Push-up",
+      "Diamond Push-up",
+      "Archer Push-up",
+      "One-arm Push-up",
+    ],
+  },
+  {
+    group: "vertical_push",
+    category: "push",
+    names: ["Pike Push-up", "Elevated Pike Push-up", "Wall Handstand Push-up"],
+  },
+  {
+    group: "horizontal_pull",
+    category: "pull",
+    names: ["Incline Row", "Inverted Row", "Wide Inverted Row"],
+  },
+  {
+    group: "vertical_pull",
+    category: "pull",
+    names: [
+      "Negative Pull-up",
+      "Pull-up",
+      "Archer Pull-up",
+      "One-arm Pull-up Progression",
+    ],
+  },
+  {
+    group: "squat",
+    category: "legs",
+    names: [
+      "Bodyweight Squat",
+      "Split Squat",
+      "Bulgarian Split Squat",
+      "Assisted Pistol Squat",
+      "Pistol Squat",
+    ],
+  },
+  {
+    group: "core",
+    category: "core",
+    names: ["Plank", "Leg Raises", "Hanging Knee Raise", "Hanging Leg Raise"],
+  },
 ];
 
 const rows = LADDERS.flatMap((l) =>
@@ -339,7 +387,7 @@ const rows = LADDERS.flatMap((l) =>
     level: i + 1,
     repTargetSets: 3,
     repTargetReps: 12,
-  })),
+  }))
 );
 
 // idempotent: clear then insert, so re-running doesn't create duplicates
@@ -370,6 +418,7 @@ git commit -m "feat: seed calisthenics exercise ladders"
 ## Task 5: Domain — gaining verdict (TDD)
 
 **Files:**
+
 - Create: `src/lib/domain/verdict.ts`, `tests/domain/verdict.test.ts`
 
 The verdict fits a least-squares line to bodyweight over a trailing window and converts the slope to kg/week.
@@ -377,8 +426,8 @@ The verdict fits a least-squares line to bodyweight over a trailing window and c
 - [ ] **Step 1: Write the failing test** `tests/domain/verdict.test.ts`
 
 ```ts
-import { describe, it, expect } from "vitest";
 import { computeGainingVerdict } from "@/lib/domain/verdict";
+import { describe, expect, it } from "vitest";
 
 const d = (s: string) => new Date(s + "T00:00:00Z");
 
@@ -386,7 +435,7 @@ describe("computeGainingVerdict", () => {
   it("returns insufficient_data with too few logs", () => {
     const r = computeGainingVerdict(
       [{ date: d("2026-06-01"), weightKg: 70 }],
-      d("2026-06-09"),
+      d("2026-06-09")
     );
     expect(r.state).toBe("insufficient_data");
   });
@@ -465,16 +514,14 @@ const UPPER = 0.7; // kg/week above this -> too fast
 
 const DAY_MS = 86_400_000;
 
-export function computeGainingVerdict(
-  logs: WeightLog[],
-  today: Date,
-): Verdict {
+export function computeGainingVerdict(logs: WeightLog[], today: Date): Verdict {
   const cutoff = today.getTime() - WINDOW_DAYS * DAY_MS;
   const recent = logs
     .filter((l) => l.date.getTime() >= cutoff)
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-  if (recent.length < MIN_LOGS) return { state: "insufficient_data", kgPerWeek: null };
+  if (recent.length < MIN_LOGS)
+    return { state: "insufficient_data", kgPerWeek: null };
 
   // least-squares slope of weight vs day-offset
   const x = recent.map((l) => l.date.getTime() / DAY_MS);
@@ -517,13 +564,14 @@ git commit -m "feat: gaining verdict domain logic"
 ## Task 6: Domain — progression nudge (TDD)
 
 **Files:**
+
 - Create: `src/lib/domain/progression.ts`, `tests/domain/progression.test.ts`
 
 - [ ] **Step 1: Write the failing test** `tests/domain/progression.test.ts`
 
 ```ts
-import { describe, it, expect } from "vitest";
 import { computeProgressionNudge } from "@/lib/domain/progression";
+import { describe, expect, it } from "vitest";
 
 const exercise = {
   id: 2,
@@ -553,12 +601,16 @@ describe("computeProgressionNudge", () => {
 
   it("does not nudge when too few qualifying sets", () => {
     const sets = [{ reps: 12 }, { reps: 10 }, { reps: 12 }];
-    expect(computeProgressionNudge(sets, exercise, nextExercise).shouldNudge).toBe(false);
+    expect(
+      computeProgressionNudge(sets, exercise, nextExercise).shouldNudge
+    ).toBe(false);
   });
 
   it("does not nudge when no next exercise exists (top of ladder)", () => {
     const sets = [{ reps: 20 }, { reps: 20 }, { reps: 20 }];
-    expect(computeProgressionNudge(sets, exercise, null).shouldNudge).toBe(false);
+    expect(computeProgressionNudge(sets, exercise, null).shouldNudge).toBe(
+      false
+    );
   });
 });
 ```
@@ -590,10 +642,12 @@ export type Nudge = {
 export function computeProgressionNudge(
   sets: { reps: number }[],
   exercise: ExerciseTarget,
-  next: NextExercise,
+  next: NextExercise
 ): Nudge {
   if (!next) return { shouldNudge: false };
-  const qualifying = sets.filter((s) => s.reps >= exercise.repTargetReps).length;
+  const qualifying = sets.filter(
+    (s) => s.reps >= exercise.repTargetReps
+  ).length;
   if (qualifying >= exercise.repTargetSets) {
     return { shouldNudge: true, fromName: exercise.name, toName: next.name };
   }
@@ -618,15 +672,16 @@ git commit -m "feat: progression nudge domain logic"
 ## Task 7: Domain — weekly streak (TDD)
 
 **Files:**
+
 - Create: `src/lib/domain/streak.ts`, `tests/domain/streak.test.ts`
 
-Rule: a week (Mon–Sun) is "hit" when `workoutCount >= goal`. Streak counts consecutive hit weeks ending at the current week. The *current* (in-progress) week does not break the streak if not yet hit — it's skipped, and counting continues into prior completed weeks.
+Rule: a week (Mon–Sun) is "hit" when `workoutCount >= goal`. Streak counts consecutive hit weeks ending at the current week. The _current_ (in-progress) week does not break the streak if not yet hit — it's skipped, and counting continues into prior completed weeks.
 
 - [ ] **Step 1: Write the failing test** `tests/domain/streak.test.ts`
 
 ```ts
-import { describe, it, expect } from "vitest";
 import { computeWeeklyStreak } from "@/lib/domain/streak";
+import { describe, expect, it } from "vitest";
 
 const d = (s: string) => new Date(s + "T00:00:00Z");
 
@@ -641,7 +696,9 @@ describe("computeWeeklyStreak", () => {
     const dates = [
       d("2026-06-08"), // current week: only 1 (goal 3 not met yet)
       // previous week Mon 06-01..Sun 06-07: 3 workouts
-      d("2026-06-01"), d("2026-06-03"), d("2026-06-05"),
+      d("2026-06-01"),
+      d("2026-06-03"),
+      d("2026-06-05"),
     ];
     expect(computeWeeklyStreak(dates, 3, d("2026-06-09"))).toBe(1);
   });
@@ -649,20 +706,31 @@ describe("computeWeeklyStreak", () => {
   it("counts multiple consecutive completed weeks", () => {
     const dates = [
       // current week: met
-      d("2026-06-08"), d("2026-06-09"), d("2026-06-09"),
+      d("2026-06-08"),
+      d("2026-06-09"),
+      d("2026-06-09"),
       // prev week: met
-      d("2026-06-01"), d("2026-06-03"), d("2026-06-05"),
+      d("2026-06-01"),
+      d("2026-06-03"),
+      d("2026-06-05"),
       // 2 weeks ago Mon 05-25..Sun 05-31: met
-      d("2026-05-25"), d("2026-05-27"), d("2026-05-29"),
+      d("2026-05-25"),
+      d("2026-05-27"),
+      d("2026-05-29"),
     ];
     expect(computeWeeklyStreak(dates, 3, d("2026-06-09"))).toBe(3);
   });
 
   it("stops at the first completed week that missed the goal", () => {
     const dates = [
-      d("2026-06-08"), d("2026-06-09"), d("2026-06-09"), // current met
-      d("2026-06-01"), d("2026-06-03"),                   // prev week only 2 -> miss
-      d("2026-05-25"), d("2026-05-27"), d("2026-05-29"),  // met but unreachable
+      d("2026-06-08"),
+      d("2026-06-09"),
+      d("2026-06-09"), // current met
+      d("2026-06-01"),
+      d("2026-06-03"), // prev week only 2 -> miss
+      d("2026-05-25"),
+      d("2026-05-27"),
+      d("2026-05-29"), // met but unreachable
     ];
     expect(computeWeeklyStreak(dates, 3, d("2026-06-09"))).toBe(1);
   });
@@ -695,7 +763,7 @@ function weekStart(date: Date): number {
 export function computeWeeklyStreak(
   workoutDates: Date[],
   goal: number,
-  today: Date,
+  today: Date
 ): number {
   // count workouts per week-start
   const counts = new Map<number, number>();
@@ -750,13 +818,14 @@ git commit -m "feat: weekly streak domain logic"
 ## Task 8: Domain — badminton calorie tax (TDD)
 
 **Files:**
+
 - Create: `src/lib/domain/badminton.ts`, `tests/domain/badminton.test.ts`
 
 - [ ] **Step 1: Write the failing test** `tests/domain/badminton.test.ts`
 
 ```ts
-import { describe, it, expect } from "vitest";
 import { estimateBadmintonKcal } from "@/lib/domain/badminton";
+import { describe, expect, it } from "vitest";
 
 describe("estimateBadmintonKcal", () => {
   it("low intensity ~5 kcal/min", () => {
@@ -790,7 +859,7 @@ const KCAL_PER_MIN: Record<Intensity, number> = {
 // Rough estimate only — used to nudge "eat extra today", not for precision.
 export function estimateBadmintonKcal(
   durationMin: number,
-  intensity: Intensity,
+  intensity: Intensity
 ): number {
   return durationMin * KCAL_PER_MIN[intensity];
 }
@@ -813,6 +882,7 @@ git commit -m "feat: badminton calorie-tax estimate"
 ## Task 9: Single-password auth (cookie + middleware + login)
 
 **Files:**
+
 - Create: `src/lib/auth.ts`, `src/middleware.ts`, `src/app/login/page.tsx`, `src/app/api/auth/route.ts`
 
 Approach: login form POSTs password to `/api/auth`. If it equals `APP_PASSWORD`, set a signed, HTTP-only cookie `gt_session` whose value is an HMAC of a fixed payload using `AUTH_SECRET`. Middleware verifies the HMAC on every request except `/login` and `/api/auth` and static assets.
@@ -828,12 +898,12 @@ async function hmac(secret: string): Promise<string> {
     new TextEncoder().encode(secret),
     { name: "HMAC", hash: "SHA-256" },
     false,
-    ["sign"],
+    ["sign"]
   );
   const sig = await crypto.subtle.sign(
     "HMAC",
     key,
-    new TextEncoder().encode(PAYLOAD),
+    new TextEncoder().encode(PAYLOAD)
   );
   // edge-runtime safe hex encoding (no Node Buffer in middleware)
   return Array.from(new Uint8Array(sig))
@@ -847,7 +917,7 @@ export async function makeSessionToken(secret: string): Promise<string> {
 
 export async function verifySessionToken(
   token: string | undefined,
-  secret: string,
+  secret: string
 ): Promise<boolean> {
   if (!token) return false;
   const expected = await hmac(secret);
@@ -862,7 +932,8 @@ export const SESSION_COOKIE = "gt_session";
 
 ```ts
 import { NextResponse } from "next/server";
-import { makeSessionToken, SESSION_COOKIE } from "@/lib/auth";
+
+import { SESSION_COOKIE, makeSessionToken } from "@/lib/auth";
 
 export async function POST(req: Request) {
   const { password } = await req.json();
@@ -886,7 +957,8 @@ export async function POST(req: Request) {
 
 ```ts
 import { NextRequest, NextResponse } from "next/server";
-import { verifySessionToken, SESSION_COOKIE } from "@/lib/auth";
+
+import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
 
 export async function proxy(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
@@ -901,7 +973,9 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   // protect everything except login page, auth API, and static assets
-  matcher: ["/((?!login|api/auth|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|icons).*)"],
+  matcher: [
+    "/((?!login|api/auth|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|icons).*)",
+  ],
 };
 ```
 
@@ -910,6 +984,7 @@ export const config = {
 ```tsx
 "use client";
 import { useState } from "react";
+
 import { useRouter } from "next/navigation";
 
 export default function Login() {
@@ -940,7 +1015,9 @@ export default function Login() {
           className="w-full rounded border p-3"
         />
         {error && <p className="text-sm text-red-600">Wrong password</p>}
-        <button className="w-full rounded bg-black p-3 text-white">Enter</button>
+        <button className="w-full rounded bg-black p-3 text-white">
+          Enter
+        </button>
       </form>
     </main>
   );
@@ -950,8 +1027,8 @@ export default function Login() {
 - [ ] **Step 5: Write a test for the auth helpers** `tests/auth.test.ts`
 
 ```ts
-import { describe, it, expect } from "vitest";
 import { makeSessionToken, verifySessionToken } from "@/lib/auth";
+import { describe, expect, it } from "vitest";
 
 describe("auth helpers", () => {
   it("verifies a token it just made", async () => {
@@ -987,6 +1064,7 @@ git commit -m "feat: single-password auth with signed cookie and middleware"
 ## Task 10: Repositories (thin DB access)
 
 **Files:**
+
 - Create: `src/lib/repos.ts`
 
 - [ ] **Step 1: Write `src/lib/repos.ts`**
@@ -994,14 +1072,14 @@ git commit -m "feat: single-password auth with signed cookie and middleware"
 ```ts
 import { db } from "@/db/client";
 import {
-  settings,
-  exercises,
-  workouts,
-  workoutSets,
-  bodyweightLogs,
   badmintonSessions,
+  bodyweightLogs,
+  exercises,
+  settings,
+  workoutSets,
+  workouts,
 } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 export async function getSettings() {
   const rows = await db.select().from(settings).where(eq(settings.id, 1));
@@ -1024,14 +1102,25 @@ export async function upsertSettings(data: {
 }
 
 export async function getAllExercises() {
-  return db.select().from(exercises).orderBy(exercises.ladderGroup, exercises.level);
+  return db
+    .select()
+    .from(exercises)
+    .orderBy(exercises.ladderGroup, exercises.level);
 }
 
-export async function getNextLadderExercise(ladderGroup: string, level: number) {
+export async function getNextLadderExercise(
+  ladderGroup: string,
+  level: number
+) {
   const rows = await db
     .select()
     .from(exercises)
-    .where(and(eq(exercises.ladderGroup, ladderGroup), eq(exercises.level, level + 1)));
+    .where(
+      and(
+        eq(exercises.ladderGroup, ladderGroup),
+        eq(exercises.level, level + 1)
+      )
+    );
   return rows[0] ?? null;
 }
 
@@ -1056,11 +1145,18 @@ export async function getLastSetsForExercise(exerciseId: number) {
 export async function createWorkout(
   date: string,
   note: string | null,
-  sets: { exerciseId: number; setIndex: number; reps: number; addedWeightKg: number | null }[],
+  sets: {
+    exerciseId: number;
+    setIndex: number;
+    reps: number;
+    addedWeightKg: number | null;
+  }[]
 ) {
   const [w] = await db.insert(workouts).values({ date, note }).returning();
   if (sets.length) {
-    await db.insert(workoutSets).values(sets.map((s) => ({ ...s, workoutId: w.id })));
+    await db
+      .insert(workoutSets)
+      .values(sets.map((s) => ({ ...s, workoutId: w.id })));
   }
   return w;
 }
@@ -1070,16 +1166,31 @@ export async function getWorkoutDates() {
   return rows.map((r) => new Date(r.date + "T00:00:00Z"));
 }
 
-export async function logWeight(date: string, weightKg: number, note: string | null) {
+export async function logWeight(
+  date: string,
+  weightKg: number,
+  note: string | null
+) {
   await db.insert(bodyweightLogs).values({ date, weightKg, note });
 }
 
 export async function getWeightLogs() {
-  const rows = await db.select().from(bodyweightLogs).orderBy(bodyweightLogs.date);
-  return rows.map((r) => ({ date: new Date(r.date + "T00:00:00Z"), weightKg: r.weightKg, note: r.note }));
+  const rows = await db
+    .select()
+    .from(bodyweightLogs)
+    .orderBy(bodyweightLogs.date);
+  return rows.map((r) => ({
+    date: new Date(r.date + "T00:00:00Z"),
+    weightKg: r.weightKg,
+    note: r.note,
+  }));
 }
 
-export async function logBadminton(date: string, durationMin: number, intensity: string) {
+export async function logBadminton(
+  date: string,
+  durationMin: number,
+  intensity: string
+) {
   await db.insert(badmintonSessions).values({ date, durationMin, intensity });
 }
 ```
@@ -1101,18 +1212,23 @@ git commit -m "feat: data-access repositories"
 ## Task 11: API routes (workouts, weight, badminton, settings)
 
 **Files:**
+
 - Create: `src/app/api/workouts/route.ts`, `src/app/api/weight/route.ts`, `src/app/api/badminton/route.ts`, `src/app/api/settings/route.ts`
 
 - [ ] **Step 1: Write `src/app/api/weight/route.ts`**
 
 ```ts
 import { NextResponse } from "next/server";
+
 import { logWeight } from "@/lib/repos";
 
 export async function POST(req: Request) {
   const { date, weightKg, note } = await req.json();
   if (typeof weightKg !== "number" || weightKg <= 0 || weightKg > 400) {
-    return NextResponse.json({ ok: false, error: "invalid weight" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "invalid weight" },
+      { status: 400 }
+    );
   }
   await logWeight(date, weightKg, note ?? null);
   return NextResponse.json({ ok: true });
@@ -1123,16 +1239,27 @@ export async function POST(req: Request) {
 
 ```ts
 import { NextResponse } from "next/server";
+
+import { Intensity, estimateBadmintonKcal } from "@/lib/domain/badminton";
 import { logBadminton } from "@/lib/repos";
-import { estimateBadmintonKcal, Intensity } from "@/lib/domain/badminton";
 
 export async function POST(req: Request) {
   const { date, durationMin, intensity } = await req.json();
-  if (typeof durationMin !== "number" || durationMin <= 0 || durationMin > 600) {
-    return NextResponse.json({ ok: false, error: "invalid duration" }, { status: 400 });
+  if (
+    typeof durationMin !== "number" ||
+    durationMin <= 0 ||
+    durationMin > 600
+  ) {
+    return NextResponse.json(
+      { ok: false, error: "invalid duration" },
+      { status: 400 }
+    );
   }
   if (!["low", "med", "high"].includes(intensity)) {
-    return NextResponse.json({ ok: false, error: "invalid intensity" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "invalid intensity" },
+      { status: 400 }
+    );
   }
   await logBadminton(date, durationMin, intensity);
   const kcal = estimateBadmintonKcal(durationMin, intensity as Intensity);
@@ -1144,14 +1271,19 @@ export async function POST(req: Request) {
 
 ```ts
 import { NextResponse } from "next/server";
+
+import { computeProgressionNudge } from "@/lib/domain/progression";
 import {
   createWorkout,
   getAllExercises,
   getNextLadderExercise,
 } from "@/lib/repos";
-import { computeProgressionNudge } from "@/lib/domain/progression";
 
-type SetInput = { exerciseId: number; reps: number; addedWeightKg: number | null };
+type SetInput = {
+  exerciseId: number;
+  reps: number;
+  addedWeightKg: number | null;
+};
 
 export async function POST(req: Request) {
   const { date, note, sets } = (await req.json()) as {
@@ -1164,7 +1296,10 @@ export async function POST(req: Request) {
   }
   for (const s of sets) {
     if (typeof s.reps !== "number" || s.reps <= 0 || s.reps > 1000) {
-      return NextResponse.json({ ok: false, error: "invalid reps" }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: "invalid reps" },
+        { status: 400 }
+      );
     }
   }
 
@@ -1176,7 +1311,7 @@ export async function POST(req: Request) {
       setIndex: i,
       reps: s.reps,
       addedWeightKg: s.addedWeightKg ?? null,
-    })),
+    }))
   );
 
   // compute nudges per distinct exercise in this workout
@@ -1187,9 +1322,15 @@ export async function POST(req: Request) {
   for (const exId of exerciseIds) {
     const ex = byId.get(exId);
     if (!ex) continue;
-    const exSets = sets.filter((s) => s.exerciseId === exId).map((s) => ({ reps: s.reps }));
+    const exSets = sets
+      .filter((s) => s.exerciseId === exId)
+      .map((s) => ({ reps: s.reps }));
     const next = await getNextLadderExercise(ex.ladderGroup, ex.level);
-    const nudge = computeProgressionNudge(exSets, ex, next ? { id: next.id, name: next.name } : null);
+    const nudge = computeProgressionNudge(
+      exSets,
+      ex,
+      next ? { id: next.id, name: next.name } : null
+    );
     if (nudge.shouldNudge) nudges.push(nudge);
   }
 
@@ -1201,6 +1342,7 @@ export async function POST(req: Request) {
 
 ```ts
 import { NextResponse } from "next/server";
+
 import { getSettings, upsertSettings } from "@/lib/repos";
 
 export async function GET() {
@@ -1245,6 +1387,7 @@ git commit -m "feat: api routes for workouts, weight, badminton, settings"
 ## Task 12: Home / Today screen
 
 **Files:**
+
 - Create: `src/components/VerdictCard.tsx`, `src/components/ActionButton.tsx`
 - Modify: `src/app/page.tsx`
 
@@ -1257,7 +1400,7 @@ export function ActionButton({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="flex items-center justify-center rounded-xl bg-black p-5 text-lg font-semibold text-white active:scale-95 transition"
+      className="flex items-center justify-center rounded-xl bg-black p-5 text-lg font-semibold text-white transition active:scale-95"
     >
       {label}
     </Link>
@@ -1271,10 +1414,22 @@ export function ActionButton({ href, label }: { href: string; label: string }) {
 import { Verdict } from "@/lib/domain/verdict";
 
 const COPY: Record<string, { title: string; cls: string }> = {
-  on_track: { title: "📈 On track — keep eating", cls: "bg-green-100 text-green-900" },
-  eat_more: { title: "⚠️ Not gaining — eat more", cls: "bg-amber-100 text-amber-900" },
-  too_fast: { title: "🐖 Gaining fast — ease off a bit", cls: "bg-orange-100 text-orange-900" },
-  insufficient_data: { title: "Log your weight to see your trend", cls: "bg-gray-100 text-gray-700" },
+  on_track: {
+    title: "📈 On track — keep eating",
+    cls: "bg-green-100 text-green-900",
+  },
+  eat_more: {
+    title: "⚠️ Not gaining — eat more",
+    cls: "bg-amber-100 text-amber-900",
+  },
+  too_fast: {
+    title: "🐖 Gaining fast — ease off a bit",
+    cls: "bg-orange-100 text-orange-900",
+  },
+  insufficient_data: {
+    title: "Log your weight to see your trend",
+    cls: "bg-gray-100 text-gray-700",
+  },
 };
 
 export function VerdictCard({
@@ -1291,11 +1446,14 @@ export function VerdictCard({
     <div className={`rounded-2xl p-6 ${c.cls}`}>
       <div className="text-xl font-bold">{c.title}</div>
       {verdict.kgPerWeek !== null && (
-        <div className="mt-1 text-sm">{verdict.kgPerWeek.toFixed(2)} kg/week</div>
+        <div className="mt-1 text-sm">
+          {verdict.kgPerWeek.toFixed(2)} kg/week
+        </div>
       )}
       {current !== null && target !== null && (
         <div className="mt-2 text-sm">
-          {current.toFixed(1)} → {target.toFixed(1)} kg ({(target - current).toFixed(1)} to go)
+          {current.toFixed(1)} → {target.toFixed(1)} kg (
+          {(target - current).toFixed(1)} to go)
         </div>
       )}
     </div>
@@ -1306,11 +1464,12 @@ export function VerdictCard({
 - [ ] **Step 3: Write `src/app/page.tsx`** (server component — fetches + computes)
 
 ```tsx
-import { getWeightLogs, getWorkoutDates, getSettings } from "@/lib/repos";
-import { computeGainingVerdict } from "@/lib/domain/verdict";
 import { computeWeeklyStreak } from "@/lib/domain/streak";
-import { VerdictCard } from "@/components/VerdictCard";
+import { computeGainingVerdict } from "@/lib/domain/verdict";
+import { getSettings, getWeightLogs, getWorkoutDates } from "@/lib/repos";
+
 import { ActionButton } from "@/components/ActionButton";
+import { VerdictCard } from "@/components/VerdictCard";
 
 export const dynamic = "force-dynamic";
 
@@ -1324,11 +1483,13 @@ export default async function Home() {
 
   const verdict = computeGainingVerdict(
     logs.map((l) => ({ date: l.date, weightKg: l.weightKg })),
-    now,
+    now
   );
   const goal = settings?.weeklyWorkoutGoal ?? 3;
   const streak = computeWeeklyStreak(workoutDates, goal, now);
-  const current = logs.length ? logs[logs.length - 1].weightKg : settings?.currentWeightKg ?? null;
+  const current = logs.length
+    ? logs[logs.length - 1].weightKg
+    : (settings?.currentWeightKg ?? null);
   const target = settings?.targetWeightKg ?? null;
 
   return (
@@ -1337,7 +1498,9 @@ export default async function Home() {
       <VerdictCard verdict={verdict} current={current} target={target} />
       <div className="rounded-2xl bg-gray-50 p-5 text-center">
         <div className="text-3xl font-bold">🔥 {streak}</div>
-        <div className="text-sm text-gray-600">week streak (goal {goal}/wk)</div>
+        <div className="text-sm text-gray-600">
+          week streak (goal {goal}/wk)
+        </div>
       </div>
       <div className="grid grid-cols-1 gap-3">
         <ActionButton href="/workout" label="Log Workout" />
@@ -1345,7 +1508,9 @@ export default async function Home() {
         <ActionButton href="/badminton" label="Log Badminton" />
       </div>
       <div className="text-center">
-        <a href="/progress" className="text-sm text-gray-500 underline">View progress →</a>
+        <a href="/progress" className="text-sm text-gray-500 underline">
+          View progress →
+        </a>
       </div>
     </main>
   );
@@ -1368,6 +1533,7 @@ git commit -m "feat: home/today screen with verdict and streak"
 ## Task 13: Logging screens (workout, weight, badminton)
 
 **Files:**
+
 - Create: `src/app/weight/page.tsx`, `src/app/badminton/page.tsx`, `src/app/workout/page.tsx`
 
 For brevity these are client components that POST to the APIs from Task 11. Use today's date as default (`new Date().toISOString().slice(0,10)`).
@@ -1377,6 +1543,7 @@ For brevity these are client components that POST to the APIs from Task 11. Use 
 ```tsx
 "use client";
 import { useState } from "react";
+
 import { useRouter } from "next/navigation";
 
 export default function WeightPage() {
@@ -1403,15 +1570,24 @@ export default function WeightPage() {
       <h1 className="text-2xl font-bold">Log Weight</h1>
       <form onSubmit={submit} className="space-y-4">
         <input
-          type="number" step="0.1" inputMode="decimal" required
-          value={weight} onChange={(e) => setWeight(e.target.value)}
-          placeholder="Weight (kg)" className="w-full rounded border p-3 text-lg"
+          type="number"
+          step="0.1"
+          inputMode="decimal"
+          required
+          value={weight}
+          onChange={(e) => setWeight(e.target.value)}
+          placeholder="Weight (kg)"
+          className="w-full rounded border p-3 text-lg"
         />
         <input
-          value={note} onChange={(e) => setNote(e.target.value)}
-          placeholder="Note (optional)" className="w-full rounded border p-3"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Note (optional)"
+          className="w-full rounded border p-3"
         />
-        <button className="w-full rounded-xl bg-black p-4 font-semibold text-white">Save</button>
+        <button className="w-full rounded-xl bg-black p-4 font-semibold text-white">
+          Save
+        </button>
       </form>
     </main>
   );
@@ -1423,6 +1599,7 @@ export default function WeightPage() {
 ```tsx
 "use client";
 import { useState } from "react";
+
 import { useRouter } from "next/navigation";
 
 export default function BadmintonPage() {
@@ -1453,24 +1630,39 @@ export default function BadmintonPage() {
         <div className="rounded-2xl bg-amber-100 p-6 text-amber-900">
           <p className="font-bold">~{kcal} kcal burned 🏸</p>
           <p className="text-sm">Eat extra today to stay in surplus.</p>
-          <button onClick={() => router.push("/")} className="mt-4 rounded bg-black px-4 py-2 text-white">Done</button>
+          <button
+            onClick={() => router.push("/")}
+            className="mt-4 rounded bg-black px-4 py-2 text-white"
+          >
+            Done
+          </button>
         </div>
       ) : (
         <form onSubmit={submit} className="space-y-4">
           <input
-            type="number" inputMode="numeric" required
-            value={duration} onChange={(e) => setDuration(e.target.value)}
-            placeholder="Duration (minutes)" className="w-full rounded border p-3 text-lg"
+            type="number"
+            inputMode="numeric"
+            required
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+            placeholder="Duration (minutes)"
+            className="w-full rounded border p-3 text-lg"
           />
           <div className="flex gap-2">
             {(["low", "med", "high"] as const).map((i) => (
               <button
-                type="button" key={i} onClick={() => setIntensity(i)}
+                type="button"
+                key={i}
+                onClick={() => setIntensity(i)}
                 className={`flex-1 rounded-xl p-3 capitalize ${intensity === i ? "bg-black text-white" : "bg-gray-100"}`}
-              >{i}</button>
+              >
+                {i}
+              </button>
             ))}
           </div>
-          <button className="w-full rounded-xl bg-black p-4 font-semibold text-white">Save</button>
+          <button className="w-full rounded-xl bg-black p-4 font-semibold text-white">
+            Save
+          </button>
         </form>
       )}
     </main>
@@ -1484,6 +1676,7 @@ First add a small API route so the form can look up the last session for an exer
 
 ```ts
 import { NextResponse } from "next/server";
+
 import { getLastSetsForExercise } from "@/lib/repos";
 
 export async function GET(req: Request) {
@@ -1502,16 +1695,22 @@ Then create `src/components/WorkoutForm.tsx` (note the `useEffect` that loads "l
 ```tsx
 "use client";
 import { useEffect, useState } from "react";
+
 import { useRouter } from "next/navigation";
 
 type Exercise = { id: number; name: string; category: string };
 type SetRow = { reps: string; addedWeightKg: string };
-type LastInfo = { date: string | null; sets: { reps: number; addedWeightKg: number | null }[] };
+type LastInfo = {
+  date: string | null;
+  sets: { reps: number; addedWeightKg: number | null }[];
+};
 
 export function WorkoutForm({ exercises }: { exercises: Exercise[] }) {
   const [exerciseId, setExerciseId] = useState(exercises[0]?.id ?? 0);
   const [rows, setRows] = useState<SetRow[]>([{ reps: "", addedWeightKg: "" }]);
-  const [nudges, setNudges] = useState<{ fromName?: string; toName?: string }[]>([]);
+  const [nudges, setNudges] = useState<
+    { fromName?: string; toName?: string }[]
+  >([]);
   const [last, setLast] = useState<LastInfo | null>(null);
   const router = useRouter();
 
@@ -1534,7 +1733,11 @@ export function WorkoutForm({ exercises }: { exercises: Exercise[] }) {
     const res = await fetch("/api/workouts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: new Date().toISOString().slice(0, 10), note: null, sets }),
+      body: JSON.stringify({
+        date: new Date().toISOString().slice(0, 10),
+        note: null,
+        sets,
+      }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -1551,7 +1754,12 @@ export function WorkoutForm({ exercises }: { exercises: Exercise[] }) {
             💪 You crushed {n.fromName}! Try <b>{n.toName}</b> next time.
           </div>
         ))}
-        <button onClick={() => router.push("/")} className="w-full rounded-xl bg-black p-4 text-white">Done</button>
+        <button
+          onClick={() => router.push("/")}
+          className="w-full rounded-xl bg-black p-4 text-white"
+        >
+          Done
+        </button>
       </div>
     );
   }
@@ -1559,38 +1767,70 @@ export function WorkoutForm({ exercises }: { exercises: Exercise[] }) {
   return (
     <form onSubmit={submit} className="space-y-4">
       <select
-        value={exerciseId} onChange={(e) => setExerciseId(parseInt(e.target.value, 10))}
+        value={exerciseId}
+        onChange={(e) => setExerciseId(parseInt(e.target.value, 10))}
         className="w-full rounded border p-3"
       >
         {exercises.map((ex) => (
-          <option key={ex.id} value={ex.id}>{ex.name} ({ex.category})</option>
+          <option key={ex.id} value={ex.id}>
+            {ex.name} ({ex.category})
+          </option>
         ))}
       </select>
       {last && last.sets.length > 0 && (
         <p className="text-sm text-gray-500">
-          Last time: {last.sets.map((s) => s.reps + (s.addedWeightKg ? `(+${s.addedWeightKg}kg)` : "")).join(" · ")} — beat it!
+          Last time:{" "}
+          {last.sets
+            .map(
+              (s) => s.reps + (s.addedWeightKg ? `(+${s.addedWeightKg}kg)` : "")
+            )
+            .join(" · ")}{" "}
+          — beat it!
         </p>
       )}
       {rows.map((r, i) => (
         <div key={i} className="flex gap-2">
           <input
-            type="number" inputMode="numeric" placeholder="reps"
+            type="number"
+            inputMode="numeric"
+            placeholder="reps"
             value={r.reps}
-            onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, reps: e.target.value } : x)))}
+            onChange={(e) =>
+              setRows(
+                rows.map((x, j) =>
+                  j === i ? { ...x, reps: e.target.value } : x
+                )
+              )
+            }
             className="flex-1 rounded border p-3"
           />
           <input
-            type="number" step="0.5" inputMode="decimal" placeholder="+kg"
+            type="number"
+            step="0.5"
+            inputMode="decimal"
+            placeholder="+kg"
             value={r.addedWeightKg}
-            onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, addedWeightKg: e.target.value } : x)))}
+            onChange={(e) =>
+              setRows(
+                rows.map((x, j) =>
+                  j === i ? { ...x, addedWeightKg: e.target.value } : x
+                )
+              )
+            }
             className="w-24 rounded border p-3"
           />
         </div>
       ))}
-      <button type="button" onClick={() => setRows([...rows, { reps: "", addedWeightKg: "" }])} className="text-sm text-gray-600 underline">
+      <button
+        type="button"
+        onClick={() => setRows([...rows, { reps: "", addedWeightKg: "" }])}
+        className="text-sm text-gray-600 underline"
+      >
         + add set
       </button>
-      <button className="w-full rounded-xl bg-black p-4 font-semibold text-white">Save workout</button>
+      <button className="w-full rounded-xl bg-black p-4 font-semibold text-white">
+        Save workout
+      </button>
     </form>
   );
 }
@@ -1600,6 +1840,7 @@ Then `src/app/workout/page.tsx`:
 
 ```tsx
 import { getAllExercises } from "@/lib/repos";
+
 import { WorkoutForm } from "@/components/WorkoutForm";
 
 export const dynamic = "force-dynamic";
@@ -1609,7 +1850,13 @@ export default async function WorkoutPage() {
   return (
     <main className="mx-auto max-w-md space-y-4 p-5">
       <h1 className="text-2xl font-bold">Log Workout</h1>
-      <WorkoutForm exercises={exercises.map((e) => ({ id: e.id, name: e.name, category: e.category }))} />
+      <WorkoutForm
+        exercises={exercises.map((e) => ({
+          id: e.id,
+          name: e.name,
+          category: e.category,
+        }))}
+      />
     </main>
   );
 }
@@ -1629,6 +1876,7 @@ git commit -m "feat: workout, weight, badminton logging screens"
 ## Task 14: Progress screen (weight chart + per-exercise history)
 
 **Files:**
+
 - Create: `src/app/progress/page.tsx`, `src/components/WeightChart.tsx`
 - Modify: `package.json` (add chart lib)
 
@@ -1642,7 +1890,15 @@ npm install recharts
 
 ```tsx
 "use client";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer } from "recharts";
+import {
+  Line,
+  LineChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 export function WeightChart({
   data,
@@ -1653,12 +1909,26 @@ export function WeightChart({
 }) {
   return (
     <ResponsiveContainer width="100%" height={240}>
-      <LineChart data={data} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
+      <LineChart
+        data={data}
+        margin={{ top: 10, right: 10, bottom: 0, left: -20 }}
+      >
         <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-        <YAxis domain={["dataMin - 1", "dataMax + 1"]} tick={{ fontSize: 10 }} />
+        <YAxis
+          domain={["dataMin - 1", "dataMax + 1"]}
+          tick={{ fontSize: 10 }}
+        />
         <Tooltip />
-        {target !== null && <ReferenceLine y={target} stroke="#16a34a" strokeDasharray="4 4" />}
-        <Line type="monotone" dataKey="weightKg" stroke="#000" dot={false} strokeWidth={2} />
+        {target !== null && (
+          <ReferenceLine y={target} stroke="#16a34a" strokeDasharray="4 4" />
+        )}
+        <Line
+          type="monotone"
+          dataKey="weightKg"
+          stroke="#000"
+          dot={false}
+          strokeWidth={2}
+        />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -1674,7 +1944,8 @@ export async function getExerciseBests() {
     .from(workoutSets)
     .innerJoin(exercises, eq(workoutSets.exerciseId, exercises.id));
   const best = new Map<string, number>();
-  for (const r of rows) best.set(r.name, Math.max(best.get(r.name) ?? 0, r.reps));
+  for (const r of rows)
+    best.set(r.name, Math.max(best.get(r.name) ?? 0, r.reps));
   return [...best.entries()]
     .map(([name, bestReps]) => ({ name, bestReps }))
     .sort((a, b) => b.bestReps - a.bestReps);
@@ -1684,7 +1955,8 @@ export async function getExerciseBests() {
 - [ ] **Step 4: Write `src/app/progress/page.tsx`**
 
 ```tsx
-import { getWeightLogs, getSettings, getExerciseBests } from "@/lib/repos";
+import { getExerciseBests, getSettings, getWeightLogs } from "@/lib/repos";
+
 import { WeightChart } from "@/components/WeightChart";
 
 export const dynamic = "force-dynamic";
@@ -1712,7 +1984,9 @@ export default async function ProgressPage() {
         )}
       </section>
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-gray-600">Exercise bests (max reps in a set)</h2>
+        <h2 className="mb-2 text-sm font-semibold text-gray-600">
+          Exercise bests (max reps in a set)
+        </h2>
         {bests.length === 0 ? (
           <p className="text-gray-500">No workouts logged yet.</p>
         ) : (
@@ -1726,7 +2000,9 @@ export default async function ProgressPage() {
           </ul>
         )}
       </section>
-      <a href="/" className="block text-center text-sm text-gray-500 underline">← back</a>
+      <a href="/" className="block text-center text-sm text-gray-500 underline">
+        ← back
+      </a>
     </main>
   );
 }
@@ -1746,6 +2022,7 @@ git commit -m "feat: progress screen with weight chart"
 ## Task 15: PWA (manifest + service worker) + settings bootstrap
 
 **Files:**
+
 - Modify: `src/app/layout.tsx`
 - Create: `public/manifest.webmanifest`, `public/sw.js`, `public/icons/` (192 + 512 png), `src/components/SwRegister.tsx`, `src/app/settings/page.tsx`
 
@@ -1762,8 +2039,18 @@ git commit -m "feat: progress screen with weight chart"
   "background_color": "#ffffff",
   "theme_color": "#000000",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }
 ```
@@ -1825,6 +2112,7 @@ export const viewport = {
   themeColor: "#000000",
 };
 ```
+
 (render `<SwRegister />` as the first child inside `<body>`, keeping the existing `{children}`.)
 
 - [ ] **Step 6: Create `src/app/settings/page.tsx`** (so target/current weight + weekly goal can be set — required before the verdict is meaningful)
@@ -1832,6 +2120,7 @@ export const viewport = {
 ```tsx
 "use client";
 import { useEffect, useState } from "react";
+
 import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
@@ -1841,13 +2130,15 @@ export default function SettingsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch("/api/settings").then((r) => r.json()).then((s) => {
-      if (s) {
-        setTarget(String(s.targetWeightKg));
-        setCurrent(String(s.currentWeightKg));
-        setGoal(String(s.weeklyWorkoutGoal));
-      }
-    });
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((s) => {
+        if (s) {
+          setTarget(String(s.targetWeightKg));
+          setCurrent(String(s.currentWeightKg));
+          setGoal(String(s.weeklyWorkoutGoal));
+        }
+      });
   }, []);
 
   async function submit(e: React.FormEvent) {
@@ -1868,16 +2159,42 @@ export default function SettingsPage() {
     <main className="mx-auto max-w-md space-y-4 p-5">
       <h1 className="text-2xl font-bold">Settings</h1>
       <form onSubmit={submit} className="space-y-4">
-        <label className="block text-sm">Current weight (kg)
-          <input type="number" step="0.1" required value={current} onChange={(e) => setCurrent(e.target.value)} className="mt-1 w-full rounded border p-3" />
+        <label className="block text-sm">
+          Current weight (kg)
+          <input
+            type="number"
+            step="0.1"
+            required
+            value={current}
+            onChange={(e) => setCurrent(e.target.value)}
+            className="mt-1 w-full rounded border p-3"
+          />
         </label>
-        <label className="block text-sm">Target weight (kg)
-          <input type="number" step="0.1" required value={target} onChange={(e) => setTarget(e.target.value)} className="mt-1 w-full rounded border p-3" />
+        <label className="block text-sm">
+          Target weight (kg)
+          <input
+            type="number"
+            step="0.1"
+            required
+            value={target}
+            onChange={(e) => setTarget(e.target.value)}
+            className="mt-1 w-full rounded border p-3"
+          />
         </label>
-        <label className="block text-sm">Weekly workout goal
-          <input type="number" inputMode="numeric" required value={goal} onChange={(e) => setGoal(e.target.value)} className="mt-1 w-full rounded border p-3" />
+        <label className="block text-sm">
+          Weekly workout goal
+          <input
+            type="number"
+            inputMode="numeric"
+            required
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+            className="mt-1 w-full rounded border p-3"
+          />
         </label>
-        <button className="w-full rounded-xl bg-black p-4 font-semibold text-white">Save</button>
+        <button className="w-full rounded-xl bg-black p-4 font-semibold text-white">
+          Save
+        </button>
       </form>
     </main>
   );
@@ -1887,7 +2204,12 @@ export default function SettingsPage() {
 - [ ] **Step 7: Add a Settings link** to `src/app/page.tsx` footer (next to the progress link):
 
 ```tsx
-<a href="/settings" className="block text-center text-sm text-gray-500 underline">Settings</a>
+<a
+  href="/settings"
+  className="block text-center text-sm text-gray-500 underline"
+>
+  Settings
+</a>
 ```
 
 - [ ] **Step 8: Build + verify PWA**
@@ -1935,4 +2257,7 @@ git commit -m "chore: final verification fixes"
 - **Drizzle numeric gotcha:** weights use `doublePrecision` deliberately so they return as JS numbers (no string parsing). Keep it that way.
 - **Date handling:** dates are stored as `date` (no time). Repos parse them as UTC midnight (`+ "T00:00:00Z"`) so domain math is timezone-stable. Don't switch to local-time parsing or the streak/verdict windows drift.
 - **Single-user assumption:** `settings.id` is always 1. If multi-user is ever needed, that's a new spec.
+
+```
+
 ```
